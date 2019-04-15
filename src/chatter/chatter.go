@@ -316,7 +316,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		IV            []byte
 	 */
 
-	 
+
 	// TODO: your code here
 
 	return message, nil
@@ -360,6 +360,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	theNewKeyPair := NewKeyPair()
 
 	c.Sessions[*message.Sender].MyDHRatchet = theNewKeyPair
+
+	c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet //这个public key用于发送消息给对方的时候，发过去，对方用这个pk和私钥进行dh操作。
 
 	//plaintext,err := c.Sessions[*message.Sender].ReceiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 

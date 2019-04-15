@@ -261,9 +261,12 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	//encode message
 	data := []byte("extra")
+
 	iv := NewIV()
 
-	ciphertext := c.Sessions[*partnerIdentity].SendChain.AuthenticatedEncrypt(plaintext, data, iv)
+	dhForEnCrypt := DHCombine(partnerIdentity, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+
+	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
 	/*
 		fmt.Println("--------------------------------------")
 		fmt.Println(ciphertext)
@@ -281,29 +284,27 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		fmt.Println(err)
 		fmt.Println("......................................")
 		*/
-
-
 	//message sent. the sender need create a new hd for receiving response.
 
-	newKeyPair := NewKeyPair()
 
 	//need send the newKeyPair's public key to partner
 
 
 	//generate new dh for decrept parttner's resopons message
 
-
+	newKeyPair := NewKeyPair()
 
 	message := &Message{
-		Sender:   &c.Identity.PublicKey,
+		Sender:   &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey,
 		Receiver: partnerIdentity,
 		// TODO: your code here
-
 		Ciphertext: ciphertext,
 		IV: iv,
 		Counter: 0,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
+
+
 
 	/*
 		Sender        *PublicKey
@@ -315,9 +316,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		IV            []byte
 	 */
 
-
-
-
+	 
 	// TODO: your code here
 
 	return message, nil
@@ -332,10 +331,12 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
-	
 
 	// TODO: your code here
 	data := []byte("extra")
+
+	newKeyPair := NewKeyPair()
+
 
 	/*
 	fmt.Println("======================================")
@@ -351,7 +352,16 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	fmt.Println("======================================")
 	*/
 
-	plaintext,err := c.Sessions[*message.Sender].ReceiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+	theNewDh := DHCombine( message.Sender, &newKeyPair.PrivateKey )
+
+
+	plaintext,err := theNewDh.DeriveKey(CHAIN_LABEL).AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+
+	theNewKeyPair := NewKeyPair()
+
+	c.Sessions[*message.Sender].MyDHRatchet = theNewKeyPair
+
+	//plaintext,err := c.Sessions[*message.Sender].ReceiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
 	return plaintext, err
 }

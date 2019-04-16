@@ -302,7 +302,6 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	// TODO: your code here
 
-	
 	return message, nil
 }
 

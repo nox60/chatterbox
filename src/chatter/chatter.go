@@ -280,9 +280,9 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	fmt.Println("--------------------     2 :", plaintext)
 
-	fmt.Println("--------------------     3 :", dhForEnCrypt)
+	fmt.Println("--------------------     3 :", data)
 
-	fmt.Println("--------------------     4 :", dhForEnCrypt)
+	fmt.Println("--------------------     4 :", iv)
 
 	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
 

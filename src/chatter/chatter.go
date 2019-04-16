@@ -126,6 +126,10 @@ func NewChatter() *Chatter {
 	c := new(Chatter)
 	c.Identity = NewKeyPair()
 	c.Sessions = make(map[PublicKey]*Session)
+	if nil == KEY_SERVER[c.Identity.PublicKey] {
+		KEY_SERVER  = make(map[PublicKey]*PublicKey)
+	}
+
 	KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 	return c
 }
@@ -138,9 +142,8 @@ func (c *Chatter) EndSession(partnerIdentity *PublicKey) error {
 		return errors.New("Don't have that session open to tear down")
 	}
 
-
-
 	// TODO: your code here
+	c.Sessions[*partnerIdentity] = nil
 
 	return nil
 }
@@ -288,9 +291,18 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	// TODO: your code here
 	data := []byte("extra")
 
-	theNewDh := DHCombine( KEY_SERVER[*message.Sender], &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey )
+	theCurrentDh := DHCombine( KEY_SERVER[*message.Sender], &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey )
 
-	plaintext,err := theNewDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+	plaintext,err := theCurrentDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+
+
+	if message.Counter > 0{
+		return "", errors.New("error of message counter")
+	}
+
+	if len(plaintext) == 0 {
+		return "", errors.New("error of message body")
+	}
 
 	theNewKeyPair := NewKeyPair()
 
@@ -299,6 +311,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	//Update pattern
 	KEY_SERVER[c.Identity.PublicKey] = &theNewKeyPair.PublicKey
 	//plaintext,err := c.Sessions[*message.Sender].ReceiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+
 
 	return plaintext, err
 }

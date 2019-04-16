@@ -299,9 +299,10 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
 
-	
+
 	// TODO: your code here
 
+	
 	return message, nil
 }
 

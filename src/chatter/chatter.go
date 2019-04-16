@@ -39,6 +39,8 @@ import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
+	"fmt"
+
 	//	"fmt" //un-comment if you want to do any debug printing.
 )
 
@@ -255,6 +257,15 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	data := []byte("extra")
 
 	iv := NewIV()
+
+	fmt.Println("-------------++++- >>>>>")
+
+	fmt.Println(KEY_SERVER[*partnerIdentity])
+
+	fmt.Println(&c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+
+	fmt.Println("-------------===- >>>>>")
+
 
 	dhForEnCrypt := DHCombine(KEY_SERVER[*partnerIdentity], &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 

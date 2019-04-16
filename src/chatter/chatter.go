@@ -126,6 +126,7 @@ func NewChatter() *Chatter {
 	c := new(Chatter)
 	c.Identity = NewKeyPair()
 	c.Sessions = make(map[PublicKey]*Session)
+	KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 	return c
 }
 

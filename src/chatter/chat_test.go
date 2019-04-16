@@ -181,27 +181,6 @@ func CheckSend(t *testing.T,
 			PrintHandle(&receiver.Identity.PublicKey))
 	}
 
-
-	/*
-	fmt.Println(plaintext)
-
-	fmt.Println("receiver SendChain                   ", receiver.Sessions[sender.Identity.PublicKey].SendChain)
-	fmt.Println("receiver PartnerDHRatchet            ", receiver.Sessions[sender.Identity.PublicKey].PartnerDHRatchet)
-	fmt.Println("receiver ReceiveChain                ", receiver.Sessions[sender.Identity.PublicKey].ReceiveChain)
-	fmt.Println("receiver RootChain                   ", receiver.Sessions[sender.Identity.PublicKey].RootChain)
-	fmt.Println("receiver MyDHRatchet                 ", receiver.Sessions[sender.Identity.PublicKey].MyDHRatchet)
-	fmt.Println("receiver SendChStaleReceiveKeysain   ", receiver.Sessions[sender.Identity.PublicKey].StaleReceiveKeys)
-
-	fmt.Println("       -------------------           ")
-
-	fmt.Println("sender SendChain                     ", sender.Sessions[receiver.Identity.PublicKey].SendChain)
-	fmt.Println("sender PartnerDHRatchet              ", sender.Sessions[receiver.Identity.PublicKey].PartnerDHRatchet)
-	fmt.Println("sender ReceiveChain                  ", sender.Sessions[receiver.Identity.PublicKey].ReceiveChain)
-	fmt.Println("sender RootChain                     ", sender.Sessions[receiver.Identity.PublicKey].RootChain)
-	fmt.Println("sender MyDHRatchet                   ", sender.Sessions[receiver.Identity.PublicKey].MyDHRatchet)
-	fmt.Println("sender StaleReceiveKeys              ", sender.Sessions[receiver.Identity.PublicKey].StaleReceiveKeys)
-	*/
-
 	message, err := sender.SendMessage(&receiver.Identity.PublicKey, plaintext)
 	if err != nil {
 		return nil, err

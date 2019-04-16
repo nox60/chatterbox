@@ -56,7 +56,10 @@ const CHAIN_LABEL = 0x02
 // Label for deriving message keys from chain keys.
 const KEY_LABEL = 0x03
 
-var KEY_SERVER  map[PublicKey]*PublicKey
+KEY_SERVER := make(map[PublicKey]*PublicKey)
+
+
+
 
 //make(map[PublicKey]*PublicKey)
 
@@ -128,9 +131,11 @@ func NewChatter() *Chatter {
 	c := new(Chatter)
 	c.Identity = NewKeyPair()
 	c.Sessions = make(map[PublicKey]*Session)
+
+	/*
 	if nil == KEY_SERVER[c.Identity.PublicKey] {
 		KEY_SERVER  = make(map[PublicKey]*PublicKey)
-	}
+	}*/
 
 	KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 	return c
@@ -272,6 +277,8 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	fmt.Println("-------------===- >>>>>")
 	*/
 
+	fmt.Println("--------------------     0 :", KEY_SERVER)
+
 
 	dhForEnCrypt := DHCombine(KEY_SERVER[*partnerIdentity], &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 
@@ -298,7 +305,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		Counter: 0,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
-	
+
 	// TODO: your code here
 
 	return message, nil

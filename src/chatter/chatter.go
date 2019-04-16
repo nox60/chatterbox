@@ -54,6 +54,12 @@ const CHAIN_LABEL = 0x02
 // Label for deriving message keys from chain keys.
 const KEY_LABEL = 0x03
 
+var KEY_SERVER  map[PublicKey]*PublicKey
+
+//make(map[PublicKey]*PublicKey)
+
+//make(map[chatter.PublicKey](*chatter.Session))
+
 // Chatter represents a chat participant. Each Chatter has a single long-term
 // key Identity, and a map of open sessions with other users (indexed by their
 // identity keys). You should not need to modify this.
@@ -144,6 +150,8 @@ func (c *Chatter) EndSession(partnerIdentity *PublicKey) error {
 // provided for you, you will need to fill in the key derivation code.
 func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, error) {
 
+	KEY_SERVER  = make(map[PublicKey]*PublicKey)
+
 	if _, exists := c.Sessions[*partnerIdentity]; exists {
 		return nil, errors.New("Already have session open")
 	}
@@ -154,17 +162,11 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 	//fmt.Println( sender.DeriveKey(HANDSHAKE_CHECK_LABEL))
 	rootChain := CombineKeys(sender)
 
-	MyKeyPair := NewKeyPair()
-
-	MyKeyPair.PrivateKey = c.Identity.PrivateKey
-
-	MyKeyPair.PublicKey = c.Identity.PublicKey
-
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
 		// TODO: your code here
 		PartnerDHRatchet: partnerIdentity,
-		MyDHRatchet: MyKeyPair,
+		MyDHRatchet: c.Identity,
 		SendCounter   :   0,
 		LastUpdate    :   0,
 		ReceiveCounter :  0,
@@ -173,19 +175,9 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 		ReceiveChain: sender,
 	}
 
-		/*
-			MyDHRatchet      *KeyPair
-			PartnerDHRatchet *PublicKey
-			RootChain        *SymmetricKey
-			SendChain        *SymmetricKey
-			ReceiveChain     *SymmetricKey
-			StaleReceiveKeys map[int]*SymmetricKey
-			SendCounter      int
-			LastUpdate       int
-			ReceiveCounter   int
-	 	*/
-
 	// TODO: your code
+
+	KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 
 	return &c.Identity.PublicKey, nil
 
@@ -208,17 +200,11 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 
 	rootChain := CombineKeys(receiver)
 
-	MyKeyPair := NewKeyPair()
-
-	MyKeyPair.PrivateKey = c.Identity.PrivateKey
-
-	MyKeyPair.PublicKey = c.Identity.PublicKey
-
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
 		// TODO: your code here
 		PartnerDHRatchet: partnerIdentity,
-		MyDHRatchet: MyKeyPair,
+		MyDHRatchet: c.Identity,
 		SendCounter   :   0,
 		LastUpdate    :   0,
 		ReceiveCounter :  0,
@@ -226,6 +212,8 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		SendChain: receiver,
 		ReceiveChain: receiver,
 	}
+
+	KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 
 	// TODO: your code here
 	return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
@@ -264,38 +252,14 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	iv := NewIV()
 
-	dhForEnCrypt := DHCombine(partnerIdentity, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+	dhForEnCrypt := DHCombine(KEY_SERVER[*partnerIdentity], &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 
 	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
-	/*
-		fmt.Println("--------------------------------------")
-		fmt.Println(ciphertext)
-		fmt.Println("--------------------------------------")
-
-		fmt.Println("......................................")
-		fmt.Println(data)
-		fmt.Println(iv)
-		fmt.Println(ciphertext)
-		fmt.Println(c.Sessions[*partnerIdentity].SendChain)
-
-		plaintext,err := c.Sessions[*partnerIdentity].SendChain.AuthenticatedDecrypt(ciphertext, data, iv)
-
-		fmt.Println(plaintext)
-		fmt.Println(err)
-		fmt.Println("......................................")
-		*/
-	//message sent. the sender need create a new hd for receiving response.
-
-
-	//need send the newKeyPair's public key to partner
-
-
-	//generate new dh for decrept parttner's resopons message
 
 	newKeyPair := NewKeyPair()
 
 	message := &Message{
-		Sender:   &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey,
+		Sender:  &c.Identity.PublicKey,
 		Receiver: partnerIdentity,
 		// TODO: your code here
 		Ciphertext: ciphertext,
@@ -304,23 +268,12 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
 
-
-
-	/*
-		Sender        *PublicKey
-		Receiver      *PublicKey
-		NextDHRatchet *PublicKey
-		Counter       int
-		LastUpdate    int
-		Ciphertext    []byte
-		IV            []byte
-	 */
-
-
 	// TODO: your code here
 
 	return message, nil
 }
+
+
 
 // ReceiveMessage is used to receive the given message and return the correct
 // plaintext. This method is where most of the key derivation, ratcheting
@@ -331,39 +284,21 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
-
 	// TODO: your code here
 	data := []byte("extra")
 
-	newKeyPair := NewKeyPair()
+	theNewDh := DHCombine( KEY_SERVER[*message.Sender], &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey )
 
-
-	/*
-	fmt.Println("======================================")
-	fmt.Println(data)
-	fmt.Println(message.IV)
-	fmt.Println(message.Ciphertext)
-	fmt.Println(c.Sessions[*message.Sender].ReceiveChain)
-
-
-
-	fmt.Println(plaintext)
-	fmt.Println(err)
-	fmt.Println("======================================")
-	*/
-
-	theNewDh := DHCombine( message.Sender, &newKeyPair.PrivateKey )
-
-
-	plaintext,err := theNewDh.DeriveKey(CHAIN_LABEL).AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+	plaintext,err := theNewDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
 	theNewKeyPair := NewKeyPair()
 
 	c.Sessions[*message.Sender].MyDHRatchet = theNewKeyPair
 
-	c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet //这个public key用于发送消息给对方的时候，发过去，对方用这个pk和私钥进行dh操作。
-
+	//Update pattern
+	KEY_SERVER[c.Identity.PublicKey] = &theNewKeyPair.PublicKey
 	//plaintext,err := c.Sessions[*message.Sender].ReceiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
 	return plaintext, err
 }
+

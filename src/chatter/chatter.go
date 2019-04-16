@@ -145,7 +145,7 @@ func (c *Chatter) EndSession(partnerIdentity *PublicKey) error {
 	}
 
 	// TODO: your code here
-	c.Sessions[*partnerIdentity] = nil
+	delete(c.Sessions, *partnerIdentity)
 
 	return nil
 }
@@ -258,16 +258,31 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	iv := NewIV()
 
+	/*
 	fmt.Println("-------------++++- >>>>>")
 
-	fmt.Println(KEY_SERVER[*partnerIdentity])
+	fmt.Println("1    ", KEY_SERVER[*partnerIdentity])
 
-	fmt.Println(&c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+	fmt.Println("2    ", c.Sessions[*partnerIdentity])
+
+	fmt.Println("3    ", &c.Sessions[*partnerIdentity].MyDHRatchet)
+
+	fmt.Println("4    ", &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 
 	fmt.Println("-------------===- >>>>>")
+	*/
 
 
 	dhForEnCrypt := DHCombine(KEY_SERVER[*partnerIdentity], &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+
+
+	fmt.Println("--------------------     1 :", dhForEnCrypt)
+
+	fmt.Println("--------------------     2 :", plaintext)
+
+	fmt.Println("--------------------     3 :", dhForEnCrypt)
+
+	fmt.Println("--------------------     4 :", dhForEnCrypt)
 
 	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
 

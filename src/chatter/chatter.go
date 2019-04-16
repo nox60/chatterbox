@@ -283,7 +283,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	fmt.Println("--------------------     3 :", data)
 
 	fmt.Println("--------------------     4 :", iv)
-	
+
 
 	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
@@ -299,6 +299,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
 
+	
 	// TODO: your code here
 
 	return message, nil

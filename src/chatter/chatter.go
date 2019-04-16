@@ -298,8 +298,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		Counter: 0,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
-
-
+	
 	// TODO: your code here
 
 	return message, nil

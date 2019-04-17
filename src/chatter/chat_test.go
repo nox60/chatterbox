@@ -241,8 +241,8 @@ func CheckSendReceive(t *testing.T,
 	plaintext string) error {
 
 
-		fmt.Println("sender:        -----   ", sender.Identity.PublicKey)
-		fmt.Println("receiver:      -----   ", receiver.Identity.PublicKey)
+		//fmt.Println("sender:        -----   ", sender.Identity.PublicKey)
+		//fmt.Println("receiver:      -----   ", receiver.Identity.PublicKey)
 
 	message, err := CheckSend(t, sender, receiver, plaintext)
 	if err != nil {
@@ -579,6 +579,9 @@ func TestSynchronousChatExtended(t *testing.T) {
 		}
 
 		m := fmt.Sprintf("M%d", i)
+
+
+		/*
 		fmt.Println("  ")
 		fmt.Println("  ")
 		fmt.Println("  ")
@@ -591,7 +594,7 @@ func TestSynchronousChatExtended(t *testing.T) {
 
 		fmt.Println(m,"  |||   ",i)
 
-		fmt.Println("     m    -----------     ",  m )
+		fmt.Println("     m    -----------     ",  m )*/
 		if VERBOSE {
 			fmt.Printf("Message \"%s\" to be delivered from %s to %s\n",
 				m,

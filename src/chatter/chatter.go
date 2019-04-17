@@ -39,8 +39,6 @@ import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
-	"fmt"
-
 	//"fmt"
 	"sync"
 
@@ -62,6 +60,12 @@ const KEY_LABEL = 0x03
 //var KEY_SERVER map[PublicKey]*PublicKey
 
 var global_public_keys sync.Map
+
+var partner_public_keys_cache sync.Map
+
+var my_private_keys_cache sync.Map
+
+var msg_counter sync.Map
 
 //make(map[PublicKey]*PublicKey)
 
@@ -186,8 +190,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 
 	// TODO: your code
 
-	//KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
-
 	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
 
 	return &c.Identity.PublicKey, nil
@@ -267,13 +269,28 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	dhForEnCrypt := DHCombine(tt, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 
 
-	temppp, _ := global_public_keys.Load(c.Identity.PublicKey)
+	//temppp, _ := global_public_keys.Load(c.Identity.PublicKey)
 
-	fmt.Println("     -------------------->>  send    ", plaintext, "partnerIdentity      ",    partnerIdentity, "  receiver encode public key :", tt,       "             c.Identity.PublicKey"  , c.Identity.PublicKey   ," sender global_public_keys.Load(c.Identity.PublicKey) cached",  temppp.(*PublicKey)  , "c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey:    ",c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey   ,"            sender private key ()c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey: ", &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+	//fmt.Println("     -------------------->>  send    ", plaintext, "partnerIdentity      ",    partnerIdentity, "  receiver encode public key :", tt,       "             c.Identity.PublicKey"  , c.Identity.PublicKey   ," sender global_public_keys.Load(c.Identity.PublicKey) cached",  temppp.(*PublicKey)  , "c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey:    ",c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey   ,"            sender private key ()c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey: ", &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 
 	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
 	newKeyPair := NewKeyPair()
+
+	//Get counter from cache
+	counter, _ := msg_counter.Load(*partnerIdentity)
+
+	if nil == counter {
+		msg_counter.Store(*partnerIdentity, 0)
+	}
+
+	counter, _ = msg_counter.Load(*partnerIdentity)
+
+	newCounter := counter.(int)
+
+	newCounter += 1
+
+	msg_counter.Store(*partnerIdentity, newCounter)
 
 	message := &Message{
 		Sender:  &c.Identity.PublicKey,
@@ -281,7 +298,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		// TODO: your code here
 		Ciphertext: ciphertext,
 		IV: iv,
-		Counter: 0,
+		Counter: newCounter,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
 
@@ -317,7 +334,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("error of message counter")
 	}
 
-	fmt.Println(">>>>>>    received    Ciphertext", message.Ciphertext, "     plaintext     ", plaintext, "      *message.Sender     ",*message.Sender,  "      sender public key  : ", v ,"     my private key: ", &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
+	//fmt.Println(">>>>>>    received    Ciphertext", message.Ciphertext, "     plaintext     ", plaintext, "      *message.Sender     ",*message.Sender,  "      sender public key  : ", v ,"     my private key: ", &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
 
 	if len(plaintext) == 0 {
 		return "", errors.New("error of message body")
@@ -326,6 +343,10 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	theNewKeyPair := NewKeyPair()
 
 	c.Sessions[*message.Sender].MyDHRatchet = theNewKeyPair
+
+	for key := range c.Sessions {
+		c.Sessions[key].MyDHRatchet = theNewKeyPair
+	}
 
 	global_public_keys.Store(c.Identity.PublicKey, &theNewKeyPair.PublicKey)
 

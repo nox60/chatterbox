@@ -39,6 +39,8 @@ import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
+	"fmt"
+
 	//"fmt"
 	"sync"
 
@@ -77,6 +79,11 @@ var msg_counter sync.Map
 type Chatter struct {
 	Identity *KeyPair
 	Sessions map[PublicKey]*Session
+}
+
+type MessagePublicKey struct {
+	counter int
+	publicKey *PublicKey
 }
 
 // Session represents an open session between one chatter and another.
@@ -301,6 +308,15 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		Counter: newCounter,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
+
+	//Put public key into cache
+
+	publickKeyAndCount := new(MessagePublicKey{
+		1,
+		&newKeyPair.PublicKey,
+	})
+
+	fmt.Println(publickKeyAndCount)
 
 	// TODO: your code here
 

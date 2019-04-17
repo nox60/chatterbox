@@ -39,8 +39,6 @@ import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
-	"fmt"
-
 	//"fmt"
 	"sync"
 
@@ -199,6 +197,8 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 
 	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
 
+	my_private_keys_cache.Store(c.Identity.PublicKey, &c.Identity.PrivateKey)
+
 	return &c.Identity.PublicKey, nil
 }
 
@@ -231,6 +231,8 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 	}
 
 	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
+
+	my_private_keys_cache.Store(c.Identity.PublicKey, &c.Identity.PrivateKey)
 
 	// TODO: your code here
 	return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
@@ -289,6 +291,14 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	if nil == counter {
 		msg_counter.Store(*partnerIdentity, 0)
+
+		//msg_counter_partner_public_key := make(map["adf"](partnerIdentity))
+
+		msg_counter_partner_public_key := map[int] *PublicKey{
+			0: partnerIdentity,
+		}
+
+		partner_public_keys_cache.Store(partnerIdentity, msg_counter_partner_public_key)
 	}
 
 	counter, _ = msg_counter.Load(*partnerIdentity)
@@ -309,14 +319,17 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		NextDHRatchet: &newKeyPair.PublicKey,
 	}
 
+
+	v22, _ :=  partner_public_keys_cache.Load(partnerIdentity)
+
+	msg_counter_partner_public_key_temp := v22.(map[int]*PublicKey)
+
+	msg_counter_partner_public_key_temp[newCounter] = partnerIdentity
+
 	//Put public key into cache
+	partner_public_keys_cache.Store(partnerIdentity, msg_counter_partner_public_key_temp)
 
-	publickKeyAndCount := new(MessagePublicKey{
-		1,
-		&newKeyPair.PublicKey,
-	})
 
-	fmt.Println(publickKeyAndCount)
 
 	// TODO: your code here
 
@@ -340,6 +353,14 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	v, _ :=  global_public_keys.Load(*message.Sender)
 
 	tt :=  v.(*PublicKey)
+
+	//private key
+	aaa, _ := my_private_keys_cache.Load(*message.)
+
+	v, _ :=  global_public_keys.Load(*partnerIdentity)
+
+	tt :=  v.(*PublicKey)
+
 
 	theCurrentDh := DHCombine(tt, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
 

@@ -241,8 +241,6 @@ func CheckSendReceive(t *testing.T,
 	plaintext string) error {
 
 
-		fmt.Println("sender:        -----   ", sender.Identity.PublicKey)
-		fmt.Println("receiver:      -----   ", receiver.Identity.PublicKey)
 
 	message, err := CheckSend(t, sender, receiver, plaintext)
 	if err != nil {
@@ -315,6 +313,7 @@ func TestErrorRecovery(t *testing.T) {
 	SkipOnError(t, err)
 
 	message.Counter += 1
+
 	if _, err = bob.ReceiveMessage(message); err == nil {
 		t.Fatal("Did not raise error for modified sequence number")
 	}
@@ -579,19 +578,9 @@ func TestSynchronousChatExtended(t *testing.T) {
 		}
 
 		m := fmt.Sprintf("M%d", i)
-		fmt.Println("  ")
-		fmt.Println("  ")
-		fmt.Println("  ")
-		fmt.Println("  ")
-		fmt.Println("  ")
 
+		//fmt.Println(m)
 
-		fmt.Println(" c1key   |||   ",c1.Identity)
-		fmt.Println(" c2key   |||   ",c2.Identity)
-
-		fmt.Println(m,"  |||   ",i)
-
-		fmt.Println("     m    -----------     ",  m )
 		if VERBOSE {
 			fmt.Printf("Message \"%s\" to be delivered from %s to %s\n",
 				m,

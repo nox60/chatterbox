@@ -519,9 +519,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	theCurrentDh := DHCombine(message.NextDHRatchet, privateKey)
 
 	plaintext,err := theCurrentDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
-
 	
-
 
 	//fmt.Println("          ----------------    ",message.Counter)
 	/*

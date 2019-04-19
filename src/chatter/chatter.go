@@ -204,9 +204,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
 
 
-
-
-
 	//for  sender cache
 	counter_publickey := map[int]*PublicKey{
 		1:partnerIdentity,

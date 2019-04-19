@@ -213,7 +213,7 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 		}
 	} else {
 		partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
-		
+
 		partner_counter_publickey_temp[partnerIdentity] = counter_publickey
 	}
 

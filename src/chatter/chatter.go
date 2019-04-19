@@ -519,7 +519,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	theCurrentDh := DHCombine(message.NextDHRatchet, privateKey)
 
 	plaintext,err := theCurrentDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
-	
+
 
 	//fmt.Println("          ----------------    ",message.Counter)
 	/*
@@ -530,8 +530,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	if len(plaintext) == 0 {
 		return "", errors.New("error of message body")
 	}
-
-
+	
 /*
 	theNewKeyPair := NewKeyPair()
 

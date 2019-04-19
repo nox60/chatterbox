@@ -494,65 +494,22 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("error of message ")
 	}
 
-//	fmt.Println("     -------------  >>>   ",counter,"        ++++    ",*receiver_public_key)
-
 	receiver_public_private, _ := receiver_cache.Load(&c.Identity.PublicKey)
 
 	publickey_privatekey := receiver_public_private.(map[*PublicKey]*PrivateKey)
 
-//	fmt.Println("receiver_public_key            -----------------        ", receiver_public_key)
-
 	privateKey := publickey_privatekey[receiver_public_key]
-
-//	publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
-
-	//receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
-
-	//fmt.Println("counter          ",counter,"receiver current public id,   ",&c.Identity.PublicKey, "      ----------------     " , message, "    =====   ", message.NextDHRatchet,"    receiver_public_key ----   ",receiver_public_key, "......" ,privateKey)
-
-	//fmt.Println("   fffffffff    =============  >>>   ",receiver_public_private)
-
-	//receiver_public_private_map :=  receiver_public_private.(map[PublicKey]PrivateKey)
-
-	//privateKey := receiver_public_private_map[*receiver_public_key]
 
 	theCurrentDh := DHCombine(message.NextDHRatchet, privateKey)
 
 	plaintext,err := theCurrentDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-
-	//fmt.Println("          ----------------    ",message.Counter)
-	/*
-	if message.Counter > 0{
-		return "", errors.New("error of message counter")
-	}*/
-
 	if len(plaintext) == 0 {
 		return "", errors.New("error of message body")
 	}
-	
-/*
-	theNewKeyPair := NewKeyPair()
 
-	counter = counter + 1
-
-	//fmt.Println("---------------------     >>    ", count_publickey)
-
-	count_publickey[counter] = &theNewKeyPair.PublicKey
-
-	//fmt.Println("---------------------     >>    ", count_publickey)
-
-	senderMap[message.Receiver] = count_publickey
-
-	sender_cache.Store(message.Sender, senderMap)
-
-	publickey_privatekey[&theNewKeyPair.PublicKey] = &theNewKeyPair.PrivateKey
-
-	receiver_cache.Store(c.Identity.PublicKey, publickey_privatekey)
-
-	//c.Sessions[*message.Sender].MyDHRatchet = theNewKeyPair
-
-	//global_public_keys.Store(c.Identity.PublicKey, &theNewKeyPair.PublicKey)*/
+	//remove used public key
+	delete(count_publickey, counter)
 
 	return plaintext, err
 }

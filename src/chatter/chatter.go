@@ -192,7 +192,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 
 	//KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 
-
 	//init counters, record msg send times
 
 	publickey_counter := map[*PublicKey]int{
@@ -209,34 +208,18 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 		1:partnerIdentity,
 	}
 
-
-	//--------------------  open
-
-
 	sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
 
 	var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
 
 	if nil == sender_cache_tmp {
-
-		//fmt.Println("________________   1")
 		partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
 			partnerIdentity:counter_publickey,
 		}
 	} else {
-		//fmt.Println("________________   2")
-
 		partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
 		partner_counter_publickey_temp[partnerIdentity] = counter_publickey
 	}
-
-	//fmt.Println("    ++++++++++++=    ",partner_counter_publickey_temp)
-
-	//-------------------- close
-
-	//partner_counter_publickey := map[*PublicKey]map[int]*PublicKey{
-	//	partnerIdentity:counter_publickey,
-	//}
 
 	sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
 
@@ -245,15 +228,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 	publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
 
 	receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
-
-
-	/*
-	partner_counter := map[*PublicKey]int{
-		partnerIdentity: 1,
-	}
-
-	counters.Store(&c.Identity.PublicKey, partner_counter)
-	*/
 
 	return &c.Identity.PublicKey, nil
 }
@@ -296,30 +270,10 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 
 	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
 
-
-	/*
-
-	counter_publickey := map[int]*PublicKey{
-		1:partnerIdentity,
-	}
-
-	partner_counter_publickey := map[*PublicKey]map[int]*PublicKey{
-		partnerIdentity:counter_publickey,
-	}
-
-	sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey)
-
-	*/
-
-
 	//for  sender cache
 	counter_publickey := map[int]*PublicKey{
 		1:partnerIdentity,
 	}
-
-
-	//--------------------  open
-
 
 	sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
 
@@ -338,18 +292,7 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		partner_counter_publickey_temp[partnerIdentity] = counter_publickey
 	}
 
-	//fmt.Println("    ++++++++++++=    ",partner_counter_publickey_temp)
-
-	//-------------------- close
-
-	//partner_counter_publickey := map[*PublicKey]map[int]*PublicKey{
-	//	partnerIdentity:counter_publickey,
-	//}
-
 	sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
-
-
-
 
 	publickey_privatekey := make(map[*PublicKey]*PrivateKey)
 
@@ -471,10 +414,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	// TODO: your code here
 	data := []byte("extra")
 
-	//v, _ :=  global_public_keys.Load(*message.Sender)
-
-	//tt :=  v.(*PublicKey)
-
 	//get public key by counter
 
 	counter := message.Counter
@@ -512,10 +451,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 }
 
 
-
-// ReceiveMessage is used to receive the given message and return the correct
-// plaintext. This method is where most of the key derivation, ratcheting
-// and out-of-order message handling logic happens.
 func (c *Chatter) notifyPartnerUpdateKeyPairs(partnerIdentity *PublicKey, counter int) (string, error) {
 
 	theNewKeyPair := NewKeyPair()

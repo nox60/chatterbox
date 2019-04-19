@@ -413,7 +413,7 @@ func TestSynchronousChatVector(t *testing.T) {
 		t.Fatal("message.Sender not set")
 	}
 
-	//fmt.Println(" aaa ，   message.Sender.Fingerprint()   ",  message.Sender)
+	fmt.Println(" aaa777777777 ，   message.Sender.Fingerprint()   ",  message.Sender)
 
 	CheckTestVector(t, message.Sender.Fingerprint(), "83F257B18A903848BA6CDB628E7D925B", "Sender")
 	if message.Receiver == nil {

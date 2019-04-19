@@ -151,7 +151,6 @@ func (c *Chatter) EndSession(partnerIdentity *PublicKey) error {
 		return errors.New("Don't have that session open to tear down")
 	}
 
-	// TODO: your code here
 	delete(c.Sessions, *partnerIdentity)
 
 	return nil
@@ -177,7 +176,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
-		// TODO: your code here
 		PartnerDHRatchet: partnerIdentity,
 		MyDHRatchet: c.Identity,
 		SendCounter   :   0,
@@ -187,8 +185,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 		SendChain: sender,
 		ReceiveChain: sender,
 	}
-
-	// TODO: your code
 
 	//KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 
@@ -201,7 +197,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 	counters.Store(c.Identity.PublicKey, publickey_counter)
 
 	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
-
 
 	//for  sender cache
 	counter_publickey := map[int]*PublicKey{
@@ -257,7 +252,6 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
-		// TODO: your code here
 		PartnerDHRatchet: partnerIdentity,
 		MyDHRatchet: c.Identity,
 		SendCounter   :   0,
@@ -300,8 +294,6 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 
 	receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
 
-
-	// TODO: your code here
 	return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
 }
 
@@ -316,7 +308,6 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 		return nil, errors.New("Can't finalize session, not yet open")
 	}
 
-	// TODO: your code here
 	b1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
 
 	//return nil, errors.New("Not implemented")
@@ -360,7 +351,6 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	receiver_public_key := count_publickey[counter]
 
-
 	/*
 	fmt.Println("")
 	fmt.Println("")
@@ -376,8 +366,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	fmt.Println("-------------       counter                                       ", counter)
 	fmt.Println("-------------    receiver_public_key                              ", receiver_public_key)
 	fmt.Println("------------- &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey", &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
-*/
-
+	*/
 
 	dhForEnCrypt := DHCombine(receiver_public_key, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 
@@ -386,14 +375,11 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	message := &Message{
 		Sender:  &c.Identity.PublicKey,
 		Receiver: partnerIdentity,
-		// TODO: your code here
 		Ciphertext: ciphertext,
 		IV: iv,
 		Counter: counter,
 		NextDHRatchet: &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey,
 	}
-
-	// TODO: your code here
 
 	c.notifyPartnerUpdateKeyPairs(partnerIdentity,counter+1)
 
@@ -411,7 +397,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
-	// TODO: your code here
 	data := []byte("extra")
 
 	//get public key by counter
@@ -476,7 +461,6 @@ func (c *Chatter) notifyPartnerUpdateKeyPairs(partnerIdentity *PublicKey, counte
 	publickey_privatekey[&theNewKeyPair.PublicKey] = &theNewKeyPair.PrivateKey
 
 	receiver_cache.Store(c.Identity.PublicKey, publickey_privatekey)
-
 
 	return "",nil
 }

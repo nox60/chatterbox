@@ -162,6 +162,50 @@ func TestHandshakeVector(t *testing.T) {
 	alice := NewChatter()
 	bob := NewChatter()
 
+
+
+	//-------------------- write some testing codes here
+
+	newKeypair := NewKeyPair()
+
+	newS := NewSymmetricKey()
+
+	fmt.Println("========= alice keypair")
+	fmt.Println(alice)
+	fmt.Println("")
+
+	fmt.Println("========= bob   keypair")
+	fmt.Println(bob)
+	fmt.Println("")
+
+	fmt.Println("========= newKeypair   newKeypair")
+	fmt.Println(newKeypair)
+	fmt.Println("")
+
+	fmt.Println("========= newS   newS")
+	fmt.Println(newS)
+	fmt.Println("")
+
+	bob_and_alice := DHCombine(&bob.Identity.PublicKey, &alice.Identity.PrivateKey)
+
+	alice_ance_bob := DHCombine(&alice.Identity.PublicKey, &bob.Identity.PrivateKey)
+
+	fmt.Println("========= bob_and_alice  ")
+
+	fmt.Println(bob_and_alice)
+	fmt.Println("")
+
+	fmt.Println("========= alice_ance_bob  ")
+
+	fmt.Println(alice_ance_bob)
+	fmt.Println("")
+
+
+
+	//--------------------
+
+
+
 	aliceShare, _ := alice.InitiateHandshake(&bob.Identity.PublicKey)
 	_, bobCheck, _ := bob.ReturnHandshake(&alice.Identity.PublicKey, aliceShare)
 

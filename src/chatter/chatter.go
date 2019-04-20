@@ -295,6 +295,10 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 
 	receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
 
+	aes := receiver.DeriveKey(HANDSHAKE_CHECK_LABEL)
+
+	if aes ==
+
 	return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
 }
 

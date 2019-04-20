@@ -183,7 +183,7 @@ func TestHandshakeVector(t *testing.T) {
 	fmt.Println("")
 
 	fmt.Println("========= newS   newS")
-	fmt.Println(newS)
+	fmt.Println(newS.Key)
 	fmt.Println("")
 
 	bob_and_alice := DHCombine(&bob.Identity.PublicKey, &alice.Identity.PrivateKey)
@@ -191,16 +191,49 @@ func TestHandshakeVector(t *testing.T) {
 	alice_ance_bob := DHCombine(&alice.Identity.PublicKey, &bob.Identity.PrivateKey)
 
 	fmt.Println("========= bob_and_alice  ")
-
-	fmt.Println(bob_and_alice)
+	fmt.Println(bob_and_alice.Key)
 	fmt.Println("")
 
 	fmt.Println("========= alice_ance_bob  ")
+	fmt.Println(alice_ance_bob.Key)
+	fmt.Println("")
 
-	fmt.Println(alice_ance_bob)
+	fmt.Println("========= alice_public_private_dh  ")
+	alice_pub_pri := DHCombine(&alice.Identity.PublicKey, &alice.Identity.PrivateKey)
+	fmt.Println(alice_pub_pri.Key)
+	fmt.Println("")
+
+	fmt.Println("========= bob_public_private_dh  ")
+	bob_pub_pri := DHCombine(&bob.Identity.PublicKey, &bob.Identity.PrivateKey)
+	fmt.Println(bob_pub_pri.Key)
+	fmt.Println("")
+
+	fmt.Println("========= news alicedh bobdh combine  ")
+	news_alicedh_bobdh := CombineKeys(newS, alice_pub_pri, bob_pub_pri)
+	fmt.Println(news_alicedh_bobdh.Key)
+	fmt.Println("")
+
+	bob_and_alice_combile_news := CombineKeys(bob_and_alice, newS)
+	fmt.Println("========= bob_and_alice_combile_news  ")
+	fmt.Println(bob_and_alice_combile_news.Key)
 	fmt.Println("")
 
 
+	news_combile_bob_and_alice := CombineKeys(newS, bob_and_alice)
+	fmt.Println("========= news_combile_bob_and_alice  ")
+	fmt.Println(news_combile_bob_and_alice.Key)
+	fmt.Println("")
+
+	fmt.Println("========= derive_bob_and_alice_combile_news  ")
+	fmt.Println(bob_and_alice_combile_news.DeriveKey(0x01).Key)
+	fmt.Println("")
+
+	fmt.Println("========= derive_news_combile_bob_and_alice  ")
+	fmt.Println(news_combile_bob_and_alice.DeriveKey(0x01).Key)
+	fmt.Println("")
+
+
+	//DHCombine(alice.Identity.PublicKey, alice.Identity.Fingerprint())
 
 	//--------------------
 

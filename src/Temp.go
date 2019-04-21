@@ -143,4 +143,5 @@ func exponent(a, n uint64) uint64 {
 		a *= a
 	}
 	return result
+
 }

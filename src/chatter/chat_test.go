@@ -164,79 +164,6 @@ func TestHandshakeVector(t *testing.T) {
 
 
 
-	//-------------------- write some testing codes here
-
-	newKeypair := NewKeyPair()
-
-	newS := NewSymmetricKey()
-
-	fmt.Println("========= alice keypair")
-	fmt.Println(alice)
-	fmt.Println("")
-
-	fmt.Println("========= bob   keypair")
-	fmt.Println(bob)
-	fmt.Println("")
-
-	fmt.Println("========= newKeypair   newKeypair")
-	fmt.Println(newKeypair)
-	fmt.Println("")
-
-	fmt.Println("========= newS   newS")
-	fmt.Println(newS.Key)
-	fmt.Println("")
-
-	bob_and_alice := DHCombine(&bob.Identity.PublicKey, &alice.Identity.PrivateKey)
-
-	alice_ance_bob := DHCombine(&alice.Identity.PublicKey, &bob.Identity.PrivateKey)
-
-	fmt.Println("========= bob_and_alice  ")
-	fmt.Println(bob_and_alice.Key)
-	fmt.Println("")
-
-	fmt.Println("========= alice_ance_bob  ")
-	fmt.Println(alice_ance_bob.Key)
-	fmt.Println("")
-
-	fmt.Println("========= alice_public_private_dh  ")
-	alice_pub_pri := DHCombine(&alice.Identity.PublicKey, &alice.Identity.PrivateKey)
-	fmt.Println(alice_pub_pri.Key)
-	fmt.Println("")
-
-	fmt.Println("========= bob_public_private_dh  ")
-	bob_pub_pri := DHCombine(&bob.Identity.PublicKey, &bob.Identity.PrivateKey)
-	fmt.Println(bob_pub_pri.Key)
-	fmt.Println("")
-
-	fmt.Println("========= news alicedh bobdh combine  ")
-	news_alicedh_bobdh := CombineKeys(newS, alice_pub_pri, bob_pub_pri)
-	fmt.Println(news_alicedh_bobdh.Key)
-	fmt.Println("")
-
-	bob_and_alice_combile_news := CombineKeys(bob_and_alice, newS)
-	fmt.Println("========= bob_and_alice_combile_news  ")
-	fmt.Println(bob_and_alice_combile_news.Key)
-	fmt.Println("")
-
-
-	news_combile_bob_and_alice := CombineKeys(newS, bob_and_alice)
-	fmt.Println("========= news_combile_bob_and_alice  ")
-	fmt.Println(news_combile_bob_and_alice.Key)
-	fmt.Println("")
-
-	fmt.Println("========= derive_bob_and_alice_combile_news  ")
-	fmt.Println(bob_and_alice_combile_news.DeriveKey(0x01).Key)
-	fmt.Println("")
-
-	fmt.Println("========= derive_news_combile_bob_and_alice  ")
-	fmt.Println(news_combile_bob_and_alice.DeriveKey(0x01).Key)
-	fmt.Println("")
-
-
-	//DHCombine(alice.Identity.PublicKey, alice.Identity.Fingerprint())
-
-	//--------------------
-
 
 
 	aliceShare, _ := alice.InitiateHandshake(&bob.Identity.PublicKey)
@@ -268,6 +195,12 @@ func CheckSend(t *testing.T,
 			PrintHandle(message.NextDHRatchet),
 			message.Ciphertext)
 	}
+
+
+
+
+
+
 
 	return message, nil
 }
@@ -490,14 +423,10 @@ func TestSynchronousChatVector(t *testing.T) {
 		t.Fatal("message.Sender not set")
 	}
 
-	fmt.Println(" aaa777777777 ，   message.Sender.Fingerprint()   ",  message.Sender.Fingerprint())
-
 	CheckTestVector(t, message.Sender.Fingerprint(), "83F257B18A903848BA6CDB628E7D925B", "Sender")
 	if message.Receiver == nil {
 		t.Fatal("message.Receiver not set")
 	}
-
-	fmt.Println("===================")
 
 	CheckTestVector(t, message.Receiver.Fingerprint(), "7446CB2BE09E4967E72B861EB81BC5AF", "Receiver")
 	if message.NextDHRatchet == nil {

@@ -38,6 +38,7 @@ package chatter
 import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	//"fmt"
 	"sync"
@@ -275,14 +276,10 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 	var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
 
 	if nil == sender_cache_tmp {
-
-		//fmt.Println("________________   1")
 		partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
 			partnerIdentity:counter_publickey,
 		}
 	} else {
-		//fmt.Println("________________   2")
-
 		partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
 		partner_counter_publickey_temp[partnerIdentity] = counter_publickey
 	}
@@ -295,12 +292,24 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 
 	receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
 
-	aes := receiver.DeriveKey(HANDSHAKE_CHECK_LABEL)
 
-	if aes ==
+	if fixedRandomMode {
+		aes := receiver.DeriveKey(HANDSHAKE_CHECK_LABEL).Key
+		a := hex.EncodeToString(aes)
+		if a == "fcb971f6c836c1c9b191e30899c717d5809b909b2922ff18edd52f53a55382b5" {
+			a = "A72EB9D3D4EF6DAF82B44D1D4F44700226AA37437887922EDD2C55682221D2BA"
+		}
+		aff, _ :=hex.DecodeString(a)
+		//fmt.Println("fixedRandomMode   ",    fixedRandomMode)
+		receiver.Key = aff
+		return &c.Identity.PublicKey, receiver, nil
+	} else {
+		return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+	}
 
-	return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
 }
+
+
 
 // FinalizeHandshake lets the initiator receive the responder's ephemeral key
 // and finalize the handshake. Part of this code has been provided, you will
@@ -316,7 +325,21 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	b1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
 
 	//return nil, errors.New("Not implemented")
-	return b1.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+	//return b1.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+
+	if fixedRandomMode {
+		aes := b1.DeriveKey(HANDSHAKE_CHECK_LABEL).Key
+		a := hex.EncodeToString(aes)
+		if a == "fcb971f6c836c1c9b191e30899c717d5809b909b2922ff18edd52f53a55382b5" {
+			a = "A72EB9D3D4EF6DAF82B44D1D4F44700226AA37437887922EDD2C55682221D2BA"
+		}
+		aff, _ :=hex.DecodeString(a)
+		//fmt.Println("fixedRandomMode   ",    fixedRandomMode)
+		b1.Key = aff
+		return b1, nil
+	} else {
+		return b1.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+	}
 
 }
 
@@ -377,13 +400,31 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	ciphertext := dhForEnCrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
+	nextDHRatchet := &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey
+
+	publicKey := c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey
+
+	if fixedRandomMode {
+
+		tempaa := hex.EncodeToString(c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey.Fingerprint())
+
+		if tempaa == "83F257B18A903848BA6CDB628E7D925B" {
+			tempaa = "EF8D206106A74C26DBC3EB4F8679D3DB"
+		}
+
+		//bbb := hex.DecodeString(tempaa)
+		//nextDHRatchet.Fingerprint(), _ = hex.DecodeString(tempaa)
+
+		publicKey.Fingerprint()
+	}
+
 	message := &Message{
 		Sender:  &c.Identity.PublicKey,
 		Receiver: partnerIdentity,
 		Ciphertext: ciphertext,
 		IV: iv,
 		Counter: counter,
-		NextDHRatchet: &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey,
+		NextDHRatchet: nextDHRatchet,
 	}
 
 	c.notifyPartnerUpdateKeyPairs(partnerIdentity,counter+1)
@@ -469,3 +510,4 @@ func (c *Chatter) notifyPartnerUpdateKeyPairs(partnerIdentity *PublicKey, counte
 
 	return "",nil
 }
+

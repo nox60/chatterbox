@@ -12,7 +12,6 @@ func main() {
 	//testpackage.Abc()
 	//fmt.Println(chatter.NewSymmetricKey())
 	//fmt.Println(chatter.RandomnessSource())
-
 	tempObj := new(chatter.KeyPair)
 
 	tempObj = chatter.NewKeyPair()
@@ -129,7 +128,6 @@ func main() {
 			if VERBOSE {
 			fmt.Printf("Handshake master key hash: %X\n", bobCheck.Key)
 		}
-
 			return err
 		}*/
 }

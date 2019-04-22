@@ -54,9 +54,11 @@ func FailOnError(t *testing.T, err error) {
 // If it does not, fixed randomness mode is set to false and the test fails.
 func CheckTestVector(t *testing.T, value []byte, expectedHex, label string) {
 	expected, _ := hex.DecodeString(expectedHex)
-
+	fmt.Println("================= ", expected)
+	fmt.Println("----------------- ", value)
 	if !bytes.Equal(value, expected) {
 		t.Logf("%s did not match expected test vector", label)
+
 		t.Logf("Expected: %0X", expected)
 		t.Logf("Got: %0X", value)
 		t.Fatal("Test vector failure")

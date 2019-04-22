@@ -40,9 +40,10 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
+
 	//"fmt"
 	"sync"
-
 	//	"fmt" //un-comment if you want to do any debug printing.
 )
 
@@ -139,7 +140,7 @@ func NewChatter() *Chatter {
 	c.Identity = NewKeyPair()
 	c.Sessions = make(map[PublicKey]*Session)
 
-	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
+	global_public_keys.Store(c.Identity.PublicKey, &c.Identity.PublicKey)
 
 	return c
 }
@@ -169,64 +170,71 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 		return nil, errors.New("Already have session open")
 	}
 
+	newKeyPair := NewKeyPair()
+
 	//User partner's public key and own private key to DH process
-	sender := DHCombine(partnerIdentity, &c.Identity.PrivateKey)
+	//sender := DHCombine(partnerIdentity, &c.Identity.PrivateKey)
 
 	//fmt.Println( sender.DeriveKey(HANDSHAKE_CHECK_LABEL))
-	rootChain := CombineKeys(sender)
+	//rootChain := CombineKeys(sender)
 
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
 		PartnerDHRatchet: partnerIdentity,
-		MyDHRatchet: c.Identity,
-		SendCounter   :   0,
-		LastUpdate    :   0,
-		ReceiveCounter :  0,
-		RootChain: rootChain,
-		SendChain: sender,
-		ReceiveChain: sender,
+		MyDHRatchet:      newKeyPair,
+		SendCounter:      0,
+		LastUpdate:       0,
+		ReceiveCounter:   0,
+		RootChain:        nil,
+		SendChain:        nil,
+		ReceiveChain:     nil,
 	}
+
+	c.Sessions[*partnerIdentity].MyDHRatchet = newKeyPair
 
 	//KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
 
 	//init counters, record msg send times
-
-	publickey_counter := map[*PublicKey]int{
-		partnerIdentity:0,
-	}
-
-	counters.Store(c.Identity.PublicKey, publickey_counter)
-
-	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
-
-	//for  sender cache
-	counter_publickey := map[int]*PublicKey{
-		1:partnerIdentity,
-	}
-
-	sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
-
-	var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
-
-	if nil == sender_cache_tmp {
-		partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
-			partnerIdentity:counter_publickey,
+	/*
+		publickey_counter := map[*PublicKey]int{
+			partnerIdentity:0,
 		}
-	} else {
-		partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
 
-		partner_counter_publickey_temp[partnerIdentity] = counter_publickey
-	}
+		counters.Store(c.Identity.PublicKey, publickey_counter)
 
-	sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
+		global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
 
-	publickey_privatekey := make(map[*PublicKey]*PrivateKey)
+		//for  sender cache
+		counter_publickey := map[int]*PublicKey{
+			1:partnerIdentity,
+		}
 
-	publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
+		sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
 
-	receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
+		var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
 
-	return &c.Identity.PublicKey, nil
+		if nil == sender_cache_tmp {
+			partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
+				partnerIdentity:counter_publickey,
+			}
+		} else {
+			partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
+
+			partner_counter_publickey_temp[partnerIdentity] = counter_publickey
+		}
+
+		sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
+
+		publickey_privatekey := make(map[*PublicKey]*PrivateKey)
+
+		publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
+
+		receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
+	*/
+
+	//return &c.Identity.PublicKey, nil
+
+	return &newKeyPair.PublicKey, nil
 }
 
 // ReturnHandshake prepares the first message sent in a handshake, containing
@@ -240,76 +248,93 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		return nil, nil, errors.New("Already have session open")
 	}
 
+	bNewPairs := NewKeyPair()
+
+	dh1 := DHCombine(partnerIdentity, &bNewPairs.PrivateKey)
+	dh2 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
+	dh3 := DHCombine(partnerEphemeral, &bNewPairs.PrivateKey)
+
+	fmt.Println("dh1_b: ", dh1)
+	fmt.Println("dh2_b: ", dh2)
+	fmt.Println("dh3_b: ", dh3)
+
+	fff := CombineKeys(dh1, dh2, dh3)
+
+	//fmt.Println(fff.Key)
+
 	//init counters, record msg send times
 
-	publickey_counter := map[*PublicKey]int{
-		partnerIdentity:0,
-	}
-
-	counters.Store(c.Identity.PublicKey, publickey_counter)
-
-	receiver := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
-
-	rootChain := CombineKeys(receiver)
-
-	c.Sessions[*partnerIdentity] = &Session{
-		StaleReceiveKeys: make(map[int]*SymmetricKey),
-		PartnerDHRatchet: partnerIdentity,
-		MyDHRatchet: c.Identity,
-		SendCounter   :   0,
-		LastUpdate    :   0,
-		ReceiveCounter :  0,
-		RootChain: rootChain,
-		SendChain: receiver,
-		ReceiveChain: receiver,
-	}
-
-	global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
-
-	//for  sender cache
-	counter_publickey := map[int]*PublicKey{
-		1:partnerIdentity,
-	}
-
-	sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
-
-	var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
-
-	if nil == sender_cache_tmp {
-		partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
-			partnerIdentity:counter_publickey,
+	/*
+		publickey_counter := map[*PublicKey]int{
+			partnerIdentity:0,
 		}
-	} else {
-		partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
-		partner_counter_publickey_temp[partnerIdentity] = counter_publickey
-	}
 
-	sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
+		counters.Store(c.Identity.PublicKey, publickey_counter)
 
-	publickey_privatekey := make(map[*PublicKey]*PrivateKey)
+		receiver := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
 
-	publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
+		rootChain := CombineKeys(receiver)
 
-	receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
-
-
-	if fixedRandomMode {
-		aes := receiver.DeriveKey(HANDSHAKE_CHECK_LABEL).Key
-		a := hex.EncodeToString(aes)
-		if a == "fcb971f6c836c1c9b191e30899c717d5809b909b2922ff18edd52f53a55382b5" {
-			a = "A72EB9D3D4EF6DAF82B44D1D4F44700226AA37437887922EDD2C55682221D2BA"
+		c.Sessions[*partnerIdentity] = &Session{
+			StaleReceiveKeys: make(map[int]*SymmetricKey),
+			PartnerDHRatchet: partnerIdentity,
+			MyDHRatchet: c.Identity,
+			SendCounter   :   0,
+			LastUpdate    :   0,
+			ReceiveCounter :  0,
+			RootChain: rootChain,
+			SendChain: receiver,
+			ReceiveChain: receiver,
 		}
-		aff, _ :=hex.DecodeString(a)
-		//fmt.Println("fixedRandomMode   ",    fixedRandomMode)
-		receiver.Key = aff
-		return &c.Identity.PublicKey, receiver, nil
-	} else {
-		return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
-	}
+
+		global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
+
+		//for  sender cache
+		counter_publickey := map[int]*PublicKey{
+			1:partnerIdentity,
+		}
+
+		sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
+
+		var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
+
+		if nil == sender_cache_tmp {
+			partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
+				partnerIdentity:counter_publickey,
+			}
+		} else {
+			partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
+			partner_counter_publickey_temp[partnerIdentity] = counter_publickey
+		}
+
+		sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
+
+		publickey_privatekey := make(map[*PublicKey]*PrivateKey)
+
+		publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
+
+		receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
+
+		/*
+		if fixedRandomMode {
+			aes := receiver.DeriveKey(HANDSHAKE_CHECK_LABEL).Key
+			a := hex.EncodeToString(aes)
+			if a == "fcb971f6c836c1c9b191e30899c717d5809b909b2922ff18edd52f53a55382b5" {
+				//a = "A72EB9D3D4EF6DAF82B44D1D4F44700226AA37437887922EDD2C55682221D2BA"
+			}
+			aff, _ :=hex.DecodeString(a)
+			//fmt.Println("fixedRandomMode   ",    fixedRandomMode)
+			receiver.Key = aff
+			return &c.Identity.PublicKey, receiver, nil
+		} else {
+			return &c.Identity.PublicKey, receiver.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+		}*/
+
+	fmt.Println(fff)
+
+	return &bNewPairs.PublicKey, fff.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
 
 }
-
-
 
 // FinalizeHandshake lets the initiator receive the responder's ephemeral key
 // and finalize the handshake. Part of this code has been provided, you will
@@ -322,24 +347,34 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 		return nil, errors.New("Can't finalize session, not yet open")
 	}
 
-	b1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
-
+	dh2 := DHCombine(partnerIdentity, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+	dh1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
+	dh3 := DHCombine(partnerEphemeral, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+	kkk := CombineKeys(dh1, dh2, dh3)
+	//b1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
+	fmt.Println("dh1_a: ", dh1)
+	fmt.Println("dh2_a: ", dh2)
+	fmt.Println("dh3_a: ", dh3)
 	//return nil, errors.New("Not implemented")
 	//return b1.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
 
-	if fixedRandomMode {
-		aes := b1.DeriveKey(HANDSHAKE_CHECK_LABEL).Key
-		a := hex.EncodeToString(aes)
-		if a == "fcb971f6c836c1c9b191e30899c717d5809b909b2922ff18edd52f53a55382b5" {
-			a = "A72EB9D3D4EF6DAF82B44D1D4F44700226AA37437887922EDD2C55682221D2BA"
-		}
-		aff, _ :=hex.DecodeString(a)
-		//fmt.Println("fixedRandomMode   ",    fixedRandomMode)
-		b1.Key = aff
-		return b1, nil
-	} else {
-		return b1.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
-	}
+	/*
+		if fixedRandomMode {
+			aes := b1.DeriveKey(HANDSHAKE_CHECK_LABEL).Key
+			a := hex.EncodeToString(aes)
+			if a == "fcb971f6c836c1c9b191e30899c717d5809b909b2922ff18edd52f53a55382b5" {
+				a = "A72EB9D3D4EF6DAF82B44D1D4F44700226AA37437887922EDD2C55682221D2BA"
+			}
+			aff, _ :=hex.DecodeString(a)
+			//fmt.Println("fixedRandomMode   ",    fixedRandomMode)
+			b1.Key = aff
+			return b1, nil
+		} else {
+			return b1.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+		}*/
+
+	fmt.Println(kkk)
+	return kkk.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
 
 }
 
@@ -352,7 +387,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		return nil, errors.New("Can't send message to partner with no open session")
 	}
 
-	partner_counter,_ := counters.Load(c.Identity.PublicKey)
+	partner_counter, _ := counters.Load(c.Identity.PublicKey)
 
 	partner_counter_map := partner_counter.(map[*PublicKey]int)
 
@@ -380,20 +415,20 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	receiver_public_key := count_publickey[counter]
 
 	/*
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("-------------       senderMap                                     ", senderMap)
-	fmt.Println("-------------       partnerIdentity                               ", partnerIdentity)
-	fmt.Println("-------------       count_publickey                               ", count_publickey)
-	fmt.Println("-------------       counter                                       ", counter)
-	fmt.Println("-------------    receiver_public_key                              ", receiver_public_key)
-	fmt.Println("------------- &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey", &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("-------------       senderMap                                     ", senderMap)
+		fmt.Println("-------------       partnerIdentity                               ", partnerIdentity)
+		fmt.Println("-------------       count_publickey                               ", count_publickey)
+		fmt.Println("-------------       counter                                       ", counter)
+		fmt.Println("-------------    receiver_public_key                              ", receiver_public_key)
+		fmt.Println("------------- &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey", &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 	*/
 
 	dhForEnCrypt := DHCombine(receiver_public_key, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
@@ -419,20 +454,18 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	}
 
 	message := &Message{
-		Sender:  &c.Identity.PublicKey,
-		Receiver: partnerIdentity,
-		Ciphertext: ciphertext,
-		IV: iv,
-		Counter: counter,
+		Sender:        &c.Identity.PublicKey,
+		Receiver:      partnerIdentity,
+		Ciphertext:    ciphertext,
+		IV:            iv,
+		Counter:       counter,
 		NextDHRatchet: nextDHRatchet,
 	}
 
-	c.notifyPartnerUpdateKeyPairs(partnerIdentity,counter+1)
+	c.notifyPartnerUpdateKeyPairs(partnerIdentity, counter+1)
 
 	return message, nil
 }
-
-
 
 // ReceiveMessage is used to receive the given message and return the correct
 // plaintext. This method is where most of the key derivation, ratcheting
@@ -457,7 +490,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	receiver_public_key := count_publickey[counter]
 
-	if nil == receiver_public_key{
+	if nil == receiver_public_key {
 		return "", errors.New("error of message ")
 	}
 
@@ -469,7 +502,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	theCurrentDh := DHCombine(message.NextDHRatchet, privateKey)
 
-	plaintext,err := theCurrentDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+	plaintext, err := theCurrentDh.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
 	if len(plaintext) == 0 {
 		return "", errors.New("error of message body")
@@ -480,7 +513,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	return plaintext, err
 }
-
 
 func (c *Chatter) notifyPartnerUpdateKeyPairs(partnerIdentity *PublicKey, counter int) (string, error) {
 
@@ -508,6 +540,5 @@ func (c *Chatter) notifyPartnerUpdateKeyPairs(partnerIdentity *PublicKey, counte
 
 	receiver_cache.Store(c.Identity.PublicKey, publickey_privatekey)
 
-	return "",nil
+	return "", nil
 }
-

@@ -39,6 +39,8 @@ import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
+	"fmt"
+
 	//"fmt"
 	"sync"
 	//	"fmt" //un-comment if you want to do any debug printing.
@@ -379,7 +381,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	plaintext, err := newSendingChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	//fmt.Println("---------------------------   ", plaintext)
+	fmt.Println("---------------------------   ", plaintext)
 
 	//更新接受链
 	/*

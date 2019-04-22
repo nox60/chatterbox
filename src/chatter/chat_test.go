@@ -162,6 +162,10 @@ func TestHandshakeVector(t *testing.T) {
 	alice := NewChatter()
 	bob := NewChatter()
 
+
+
+
+
 	aliceShare, _ := alice.InitiateHandshake(&bob.Identity.PublicKey)
 	_, bobCheck, _ := bob.ReturnHandshake(&alice.Identity.PublicKey, aliceShare)
 
@@ -191,6 +195,12 @@ func CheckSend(t *testing.T,
 			PrintHandle(message.NextDHRatchet),
 			message.Ciphertext)
 	}
+
+
+
+
+
+
 
 	return message, nil
 }
@@ -413,12 +423,11 @@ func TestSynchronousChatVector(t *testing.T) {
 		t.Fatal("message.Sender not set")
 	}
 
-	//fmt.Println(" aaa ，   message.Sender.Fingerprint()   ",  message.Sender)
-
 	CheckTestVector(t, message.Sender.Fingerprint(), "83F257B18A903848BA6CDB628E7D925B", "Sender")
 	if message.Receiver == nil {
 		t.Fatal("message.Receiver not set")
 	}
+
 	CheckTestVector(t, message.Receiver.Fingerprint(), "7446CB2BE09E4967E72B861EB81BC5AF", "Receiver")
 	if message.NextDHRatchet == nil {
 		t.Fatal("message.NextDHRatchet not set")

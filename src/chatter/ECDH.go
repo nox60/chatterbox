@@ -89,6 +89,7 @@ func (kp *KeyPair) String() string {
 func (k *PublicKey) Fingerprint() []byte {
 	h := sha256.New()
 	h.Write(elliptic.Marshal(curve(), k.X, k.Y))
+
 	return h.Sum(nil)[:FINGERPRINT_LENGTH]
 }
 

@@ -104,9 +104,19 @@ func TestAuthentication(t *testing.T) {
 }
 
 func TestDerivation(t *testing.T) {
+
+
 	k1 := NewSymmetricKey()
 
 	k11 := k1.DeriveKey(0x01)
+	/*
+		fmt.Println("    -------------      ",k11,"    k11.key", k11.Key)
+
+		fmt.Println("    -------------      k1.DeriveKey(0x01)",k1.DeriveKey(0x01))
+
+		fmt.Println("    -------------      k1.DeriveKey(0x02)",k1.DeriveKey(0x02))
+		*/
+
 
 	if bytes.Equal(k1.Key, k11.Key) {
 		t.Fatal("Key derivation should lead to different key")
@@ -135,6 +145,10 @@ func TestCombination(t *testing.T) {
 	k2 := NewSymmetricKey()
 
 	k12 := CombineKeys(k1, k2)
+
+	//fmt.Println("    -------------      k12     ",k12)
+	//fmt.Println("    -------------      k12.Key     ",k12.Key)
+	//fmt.Println("    -------------      k12.DeriveKey(0x01)     ",k12.DeriveKey(0x01))
 
 	plaintext := "test"
 	data := []byte("extra")

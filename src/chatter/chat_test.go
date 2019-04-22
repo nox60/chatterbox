@@ -86,7 +86,6 @@ func PrintHandle(pk *PublicKey) string {
 // It does not fail on an error, but returns it.
 func DoHandshake(t *testing.T, alice, bob *Chatter) error {
 
-
 	if VERBOSE {
 		fmt.Println("Starting handshake sequence")
 		fmt.Printf("Initiator identity: %s\n", PrintHandle(&alice.Identity.PublicKey))
@@ -94,7 +93,6 @@ func DoHandshake(t *testing.T, alice, bob *Chatter) error {
 	}
 
 	//public key is g^a, private key is b , Alice starts with identity key ​gA​ ​ and ephemeral key ga​ ​
-
 
 	aliceShare, err := alice.InitiateHandshake(&bob.Identity.PublicKey)
 	if err != nil {
@@ -135,7 +133,6 @@ func DoHandshake(t *testing.T, alice, bob *Chatter) error {
 // TestHandshake tests if the handshake protocol can run without errors.
 func TestHandshake(t *testing.T) {
 
-
 	if VERBOSE {
 		fmt.Println("\n-------------------------------")
 		fmt.Println("Starting handshake test")
@@ -161,10 +158,6 @@ func TestHandshakeVector(t *testing.T) {
 
 	alice := NewChatter()
 	bob := NewChatter()
-
-
-
-
 
 	aliceShare, _ := alice.InitiateHandshake(&bob.Identity.PublicKey)
 	_, bobCheck, _ := bob.ReturnHandshake(&alice.Identity.PublicKey, aliceShare)
@@ -195,12 +188,6 @@ func CheckSend(t *testing.T,
 			PrintHandle(message.NextDHRatchet),
 			message.Ciphertext)
 	}
-
-
-
-
-
-
 
 	return message, nil
 }
@@ -249,8 +236,6 @@ func CheckReceive(t *testing.T,
 func CheckSendReceive(t *testing.T,
 	sender, receiver *Chatter,
 	plaintext string) error {
-
-
 
 	message, err := CheckSend(t, sender, receiver, plaintext)
 	if err != nil {
@@ -329,7 +314,6 @@ func TestErrorRecovery(t *testing.T) {
 	}
 
 	message.Counter -= 1
-
 
 	message.Ciphertext[4] ^= 0x10
 	if _, err = bob.ReceiveMessage(message); err == nil {

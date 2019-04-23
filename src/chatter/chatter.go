@@ -283,8 +283,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	//此处需要更新sending chain
 	//newSendingDH := DHCombine( c.Sessions[*partnerIdentity].PartnerDHRatchet, &nextDHRatchet.PrivateKey )
-	newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
-	newSendingChain := newRootChain.DeriveKey(KEY_LABEL)
+
 	c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
 
 	message := &Message{
@@ -302,11 +301,17 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
+	message.Ciphertext = ciphertext
+
+	//发送链步进
+
+	newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
+
+	newSendingChain := newRootChain.DeriveKey(KEY_LABEL)
+
 	c.Sessions[*partnerIdentity].RootChain = newRootChain
 
 	c.Sessions[*partnerIdentity].SendChain = newSendingChain
-
-	message.Ciphertext = ciphertext
 
 	return message, nil
 }
@@ -331,8 +336,11 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		}
 
 		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = c.Sessions[*message.Sender].ReceiveChain
+
 		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
+
 		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].RootChain.DeriveKey(KEY_LABEL)
+
 		c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 
 	}
@@ -341,7 +349,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	//fmt.Println("---------------------------   ", plaintext)
+	//接收链步进
 
 	return plaintext, err
 }

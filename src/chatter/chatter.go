@@ -337,6 +337,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = c.Sessions[*message.Sender].ReceiveChain
 
+		//接收链步进
+
 		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
 		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].RootChain.DeriveKey(KEY_LABEL)

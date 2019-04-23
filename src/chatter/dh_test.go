@@ -9,7 +9,7 @@
 // Original version
 // Joseph Bonneau February 2019
 
-package chatter
+package chatterbox
 
 import (
 	"bytes"

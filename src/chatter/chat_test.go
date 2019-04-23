@@ -13,7 +13,7 @@
 // Original version
 // Joseph Bonneau February 2019
 
-package chatter
+package chatterbox
 
 import (
 	"bytes"
@@ -54,10 +54,8 @@ func FailOnError(t *testing.T, err error) {
 // If it does not, fixed randomness mode is set to false and the test fails.
 func CheckTestVector(t *testing.T, value []byte, expectedHex, label string) {
 	expected, _ := hex.DecodeString(expectedHex)
-
 	if !bytes.Equal(value, expected) {
 		t.Logf("%s did not match expected test vector", label)
-
 		t.Logf("Expected: %0X", expected)
 		t.Logf("Got: %0X", value)
 		t.Fatal("Test vector failure")
@@ -92,8 +90,6 @@ func DoHandshake(t *testing.T, alice, bob *Chatter) error {
 		fmt.Printf("Initiator identity: %s\n", PrintHandle(&alice.Identity.PublicKey))
 		fmt.Printf("Responder identity: %s\n", PrintHandle(&bob.Identity.PublicKey))
 	}
-
-	//public key is g^a, private key is b , Alice starts with identity key ​gA​ ​ and ephemeral key ga​ ​
 
 	aliceShare, err := alice.InitiateHandshake(&bob.Identity.PublicKey)
 	if err != nil {
@@ -178,7 +174,6 @@ func CheckSend(t *testing.T,
 			plaintext,
 			PrintHandle(&receiver.Identity.PublicKey))
 	}
-
 	message, err := sender.SendMessage(&receiver.Identity.PublicKey, plaintext)
 	if err != nil {
 		return nil, err
@@ -309,18 +304,15 @@ func TestErrorRecovery(t *testing.T) {
 	SkipOnError(t, err)
 
 	message.Counter += 1
-
 	if _, err = bob.ReceiveMessage(message); err == nil {
 		t.Fatal("Did not raise error for modified sequence number")
 	}
-
 	message.Counter -= 1
 
 	message.Ciphertext[4] ^= 0x10
 	if _, err = bob.ReceiveMessage(message); err == nil {
 		t.Fatal("Did not raise error for modified ciphertext")
 	}
-
 	message.Ciphertext[4] ^= 0x10
 
 	FailOnError(t, CheckReceive(t, bob, message, "test"))
@@ -407,12 +399,10 @@ func TestSynchronousChatVector(t *testing.T) {
 	if message.Sender == nil {
 		t.Fatal("message.Sender not set")
 	}
-
 	CheckTestVector(t, message.Sender.Fingerprint(), "83F257B18A903848BA6CDB628E7D925B", "Sender")
 	if message.Receiver == nil {
 		t.Fatal("message.Receiver not set")
 	}
-
 	CheckTestVector(t, message.Receiver.Fingerprint(), "7446CB2BE09E4967E72B861EB81BC5AF", "Receiver")
 	if message.NextDHRatchet == nil {
 		t.Fatal("message.NextDHRatchet not set")
@@ -570,11 +560,7 @@ func TestSynchronousChatExtended(t *testing.T) {
 		if c1 == c2 {
 			continue
 		}
-
 		m := fmt.Sprintf("M%d", i)
-
-		//fmt.Println(m)
-
 		if VERBOSE {
 			fmt.Printf("Message \"%s\" to be delivered from %s to %s\n",
 				m,

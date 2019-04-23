@@ -33,14 +33,12 @@
 // Original version
 // Joseph Bonneau February 2019
 
-package chatter
+package chatterbox
 
 import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
-	"fmt"
-
 	//"fmt"
 	"sync"
 	//	"fmt" //un-comment if you want to do any debug printing.
@@ -165,6 +163,8 @@ func (c *Chatter) EndSession(partnerIdentity *PublicKey) error {
 // provided for you, you will need to fill in the key derivation code.
 func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, error) {
 
+	DHCombine(&c.Identity.PublicKey, &c.Identity.PrivateKey)
+
 	//KEY_SERVER  = make(map[PublicKey]*PublicKey)
 
 	if _, exists := c.Sessions[*partnerIdentity]; exists {
@@ -172,12 +172,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 	}
 
 	newKeyPair := NewKeyPair()
-
-	//User partner's public key and own private key to DH process
-	//sender := DHCombine(partnerIdentity, &c.Identity.PrivateKey)
-
-	//fmt.Println( sender.DeriveKey(HANDSHAKE_CHECK_LABEL))
-	//rootChain := CombineKeys(sender)
 
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
@@ -190,50 +184,6 @@ func (c *Chatter) InitiateHandshake(partnerIdentity *PublicKey) (*PublicKey, err
 		SendChain:        nil,
 		ReceiveChain:     nil,
 	}
-
-	c.Sessions[*partnerIdentity].MyDHRatchet = newKeyPair
-
-	//KEY_SERVER[c.Identity.PublicKey] = &c.Identity.PublicKey
-
-	//init counters, record msg send times
-	/*
-		publickey_counter := map[*PublicKey]int{
-			partnerIdentity:0,
-		}
-
-		counters.Store(c.Identity.PublicKey, publickey_counter)
-
-		global_public_keys.Store(c.Identity.PublicKey,&c.Identity.PublicKey)
-
-		//for  sender cache
-		counter_publickey := map[int]*PublicKey{
-			1:partnerIdentity,
-		}
-
-		sender_cache_tmp, _ := sender_cache.Load(c.Identity.PublicKey)
-
-		var partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{}
-
-		if nil == sender_cache_tmp {
-			partner_counter_publickey_temp = map[*PublicKey]map[int]*PublicKey{
-				partnerIdentity:counter_publickey,
-			}
-		} else {
-			partner_counter_publickey_temp = sender_cache_tmp.(map[*PublicKey]map[int]*PublicKey)
-
-			partner_counter_publickey_temp[partnerIdentity] = counter_publickey
-		}
-
-		sender_cache.Store(c.Identity.PublicKey, partner_counter_publickey_temp)
-
-		publickey_privatekey := make(map[*PublicKey]*PrivateKey)
-
-		publickey_privatekey[&c.Identity.PublicKey] = &c.Identity.PrivateKey
-
-		receiver_cache.Store(&c.Identity.PublicKey, publickey_privatekey)
-	*/
-
-	//return &c.Identity.PublicKey, nil
 
 	return &newKeyPair.PublicKey, nil
 }
@@ -255,15 +205,11 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 	dh2 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
 	dh3 := DHCombine(partnerEphemeral, &bNewPairs.PrivateKey)
 
-	/*
-		fmt.Println("dh1_b: ", dh1)
-		fmt.Println("dh2_b: ", dh2)
-		fmt.Println("dh3_b: ", dh3)
-	*/
-
 	fff := CombineKeys(dh1, dh2, dh3)
 
-	rootChain := fff.DeriveKey(HANDSHAKE_CHECK_LABEL)
+	//Ab, aB, ab
+
+	rootKey := fff.DeriveKey(HANDSHAKE_CHECK_LABEL)
 
 	c.Sessions[*partnerIdentity] = &Session{
 		StaleReceiveKeys: make(map[int]*SymmetricKey),
@@ -272,12 +218,12 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		SendCounter:      0,
 		LastUpdate:       0,
 		ReceiveCounter:   0,
-		RootChain:        rootChain,
-		SendChain:        rootChain.DeriveKey(KEY_LABEL),
-		ReceiveChain:     rootChain.DeriveKey(KEY_LABEL),
+		RootChain:        fff.DeriveKey(CHAIN_LABEL),
+		SendChain:        fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
+		ReceiveChain:     fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
 	}
 
-	return &bNewPairs.PublicKey, c.Sessions[*partnerIdentity].RootChain, nil
+	return &bNewPairs.PublicKey, rootKey, nil
 
 }
 
@@ -296,17 +242,26 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	dh1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
 	dh3 := DHCombine(partnerEphemeral, &c.Sessions[*partnerIdentity].MyDHRatchet.PrivateKey)
 	kkk := CombineKeys(dh1, dh2, dh3)
-	//b1 := DHCombine(partnerEphemeral, &c.Identity.PrivateKey)
 
-	//firstKeyChain := CombineKeys(c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL), dh3)
+	myNewKey := NewKeyPair()
 
-	rootChain := kkk.DeriveKey(HANDSHAKE_CHECK_LABEL)
+	/*
+	 *	1. Pick a new DH ratchet key ​gb​ 2
+	 *	2. Update his root key by combining with ​ga​ 2·b2
+	 *	3. Derive a new sending key chain
+	 *	4. Use this to encrypt his message and send it (along with ​g​b2​) to Alice so she can update her
+	 *	   root key in the same way and derive the keys needed to decrypt Bob’s message
+	 */
+
+	rootKey := kkk.DeriveKey(HANDSHAKE_CHECK_LABEL)
+
 	c.Sessions[*partnerIdentity].PartnerDHRatchet = partnerEphemeral
-	c.Sessions[*partnerIdentity].RootChain = rootChain
-	c.Sessions[*partnerIdentity].ReceiveChain = rootChain.DeriveKey(KEY_LABEL)
-	c.Sessions[*partnerIdentity].SendChain = rootChain.DeriveKey(KEY_LABEL)
+	c.Sessions[*partnerIdentity].RootChain = kkk.DeriveKey(CHAIN_LABEL)
+	c.Sessions[*partnerIdentity].ReceiveChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
+	c.Sessions[*partnerIdentity].SendChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
+	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
 
-	return kkk.DeriveKey(HANDSHAKE_CHECK_LABEL), nil
+	return rootKey, nil
 }
 
 // SendMessage is used to send the given plaintext string as a message.
@@ -318,34 +273,41 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		return nil, errors.New("Can't send message to partner with no open session")
 	}
 
-	data := []byte("extra")
-
 	iv := NewIV()
 
-	nextDHRatchet := NewKeyPair()
+	sendingDHRatchet := NewKeyPair()
 
-	c.Sessions[*partnerIdentity].MyDHRatchet = nextDHRatchet
-
-	encrypt := CombineKeys(c.Sessions[*partnerIdentity].SendChain, DHCombine(c.Sessions[*partnerIdentity].PartnerDHRatchet, &nextDHRatchet.PrivateKey))
-
-	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
+	if c.Sessions[*partnerIdentity].SendCounter == 0 {
+		sendingDHRatchet = c.Sessions[*partnerIdentity].MyDHRatchet
+	}
 
 	//此处需要更新sending chain
 	//newSendingDH := DHCombine( c.Sessions[*partnerIdentity].PartnerDHRatchet, &nextDHRatchet.PrivateKey )
 	newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 	newSendingChain := newRootChain.DeriveKey(KEY_LABEL)
-	c.Sessions[*partnerIdentity].RootChain = newRootChain
-	c.Sessions[*partnerIdentity].SendChain = newSendingChain
 	c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
 
 	message := &Message{
 		Sender:        &c.Identity.PublicKey,
 		Receiver:      partnerIdentity,
-		Ciphertext:    ciphertext,
+		Ciphertext:    nil,
 		IV:            iv,
 		Counter:       c.Sessions[*partnerIdentity].SendCounter,
-		NextDHRatchet: &nextDHRatchet.PublicKey,
+		NextDHRatchet: &sendingDHRatchet.PublicKey,
 	}
+
+	data := message.EncodeAdditionalData()
+
+	encrypt := c.Sessions[*partnerIdentity].SendChain
+
+	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
+
+	c.Sessions[*partnerIdentity].RootChain = newRootChain
+
+	c.Sessions[*partnerIdentity].SendChain = newSendingChain
+
+	message.Ciphertext = ciphertext
+
 	return message, nil
 }
 
@@ -358,16 +320,15 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
-	data := []byte("extra")
+	data := message.EncodeAdditionalData()
 
 	//如果收到了超前的信息，先更新 c.Sessions[*message.Sender].StaleReceiveKeys，直到可以取到对应的rootchain了之后再说
 	for {
+		//fmt.Println(">>> message.Counter ", message.Counter)
 
 		if c.Sessions[*message.Sender].ReceiveCounter+1 > message.Counter {
 			break
 		}
-
-		//fmt.Println(">>> message.Counter ", message.Counter)
 
 		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = c.Sessions[*message.Sender].ReceiveChain
 		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
@@ -376,20 +337,12 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	}
 
-	receivingDH := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
-	newSendingChain := CombineKeys(c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter], receivingDH)
+	receiveChain := c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter]
 
-	plaintext, err := newSendingChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
+	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	fmt.Println("---------------------------   ", plaintext)
+	//fmt.Println("---------------------------   ", plaintext)
 
-	//更新接受链
-	/*
-		newReceivingDH := DHCombine( message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
-		newReceivingChain := CombineKeys(c.Sessions[*message.Sender].RootChain, newReceivingDH)
-		c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet
-		c.Sessions[*message.Sender].ReceiveChain = newReceivingChain
-	*/
 	return plaintext, err
 }
 

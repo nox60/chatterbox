@@ -13,7 +13,7 @@
 // Original version
 // Joseph Bonneau February 2019
 
-package chatter
+package chatterbox
 
 import (
 	"crypto/elliptic"
@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"math/big"
 )
-
 
 const FINGERPRINT_LENGTH = 16 //128-bit key fingerprints
 
@@ -89,7 +88,6 @@ func (kp *KeyPair) String() string {
 func (k *PublicKey) Fingerprint() []byte {
 	h := sha256.New()
 	h.Write(elliptic.Marshal(curve(), k.X, k.Y))
-
 	return h.Sum(nil)[:FINGERPRINT_LENGTH]
 }
 
@@ -104,7 +102,6 @@ func (kp *KeyPair) Fingerprint() []byte {
 // to a SymmetricKey.
 func DHCombine(publicKey *PublicKey, privateKey *PrivateKey) *SymmetricKey {
 	x, y := curve().ScalarMult(publicKey.X, publicKey.Y, privateKey.Key)
-
 	h := sha256.New()
 	h.Write(elliptic.Marshal(curve(), x, y))
 

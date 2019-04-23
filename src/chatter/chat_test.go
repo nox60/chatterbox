@@ -654,7 +654,12 @@ func TestAsynchronousChat(t *testing.T) {
 	SendQueuedMessage(t, aliceQueue, 1, bob, alice, "BA.1")
 	SendQueuedMessage(t, aliceQueue, 2, bob, alice, "BA.2")
 
+	//fmt.Println("------->>   1")
+
 	FailOnError(t, DeliverQueuedMessage(t, c, aliceQueue, 2, false))
+
+	//fmt.Println("------->>   2")
+
 	FailOnError(t, DeliverQueuedMessage(t, c, aliceQueue, 1, false))
 	FailOnError(t, DeliverQueuedMessage(t, c, bobQueue, 3, false))
 

@@ -93,6 +93,7 @@ type Session struct {
 	SendCounter      int
 	LastUpdate       int
 	ReceiveCounter   int
+	ReadMessages     map[int]*Message
 }
 
 // Message represents a message as sent over an untrusted network.
@@ -275,11 +276,12 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	iv := NewIV()
 
-	sendingDHRatchet := NewKeyPair()
+	/*
+		sendingDHRatchet := NewKeyPair()
 
-	if c.Sessions[*partnerIdentity].SendCounter == 0 {
-		sendingDHRatchet = c.Sessions[*partnerIdentity].MyDHRatchet
-	}
+		if c.Sessions[*partnerIdentity].SendCounter == 0 {
+			sendingDHRatchet = c.Sessions[*partnerIdentity].MyDHRatchet
+		}*/
 
 	//此处需要更新sending chain
 	//newSendingDH := DHCombine( c.Sessions[*partnerIdentity].PartnerDHRatchet, &nextDHRatchet.PrivateKey )
@@ -292,12 +294,14 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		Ciphertext:    nil,
 		IV:            iv,
 		Counter:       c.Sessions[*partnerIdentity].SendCounter,
-		NextDHRatchet: &sendingDHRatchet.PublicKey,
+		NextDHRatchet: &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey,
 	}
 
 	data := message.EncodeAdditionalData()
 
 	encrypt := c.Sessions[*partnerIdentity].SendChain
+
+	//fmt.Println("sendcount: " , c.Sessions[*partnerIdentity].SendCounter,"  sendchain: ", encrypt)
 
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
@@ -305,15 +309,20 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	//发送链步进
 
-	newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
+	//newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 
-	newSendingChain := newRootChain.DeriveKey(KEY_LABEL)
+	//newSendingChain := newRootChain.DeriveKey(KEY_LABEL)
 
-	c.Sessions[*partnerIdentity].RootChain = newRootChain
+	//newReceivingChain := newRootChain.DeriveKey(KEY_LABEL)
 
-	c.Sessions[*partnerIdentity].SendChain = newSendingChain
+	//c.Sessions[*partnerIdentity].RootChain = newRootChain
+
+	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].SendChain.DeriveKey(KEY_LABEL)
+
+	//c.Sessions[*partnerIdentity].ReceiveChain = newReceivingChain
 
 	return message, nil
+
 }
 
 // ReceiveMessage is used to receive the given message and return the correct
@@ -335,22 +344,48 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 			break
 		}
 
-		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = c.Sessions[*message.Sender].ReceiveChain
+		oldReceiverChain := c.Sessions[*message.Sender].ReceiveChain
+
+		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = oldReceiverChain
 
 		//接收链步进
 
-		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
+		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
-		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].RootChain.DeriveKey(KEY_LABEL)
+		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].ReceiveChain.DeriveKey(KEY_LABEL)
+
+		//c.Sessions[*message.Sender].SendChain = c.Sessions[*message.Sender].RootChain.DeriveKey(KEY_LABEL)
 
 		c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 
 	}
 
+	//fmt.Print(" ======   ",    c.Sessions[*message.Sender].StaleReceiveKeys)
+
 	receiveChain := c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter]
+
+	//fmt.Println("receivecount: " , message.Counter,"  receiveChain: ", receiveChain)
+
+	if c.Sessions[*message.Sender].ReadMessages[message.Counter] != nil {
+		//fmt.Println("no  nulll....  ")
+		return "", errors.New("error")
+
+	}
 
 	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
+	//c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter] = NewSymmetricKey()
+
+	if err == nil {
+
+		if c.Sessions[*message.Sender].ReadMessages == nil {
+			c.Sessions[*message.Sender].ReadMessages = make(map[int](*Message))
+		}
+
+		c.Sessions[*message.Sender].ReadMessages[message.Counter] = message
+	}
+
+	//remove the old chain
 	//接收链步进
 
 	return plaintext, err

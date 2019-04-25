@@ -319,7 +319,6 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	//c.Sessions[*partnerIdentity].ReceiveChain = newReceivingChain
 
 	return message, nil
-
 }
 
 // ReceiveMessage is used to receive the given message and return the correct

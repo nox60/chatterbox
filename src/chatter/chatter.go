@@ -226,7 +226,6 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 	}
 
 	return &bNewPairs.PublicKey, rootKey, nil
-
 }
 
 // FinalizeHandshake lets the initiator receive the responder's ephemeral key

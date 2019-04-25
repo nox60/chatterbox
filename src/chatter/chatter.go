@@ -60,6 +60,7 @@ const KEY_LABEL = 0x03
 
 var global_public_keys sync.Map
 
+/*
 var sender_cache sync.Map
 
 var receiver_cache sync.Map
@@ -67,7 +68,7 @@ var receiver_cache sync.Map
 var counters sync.Map
 
 var global_rootchain_cache sync.Map
-
+*/
 //make(map[PublicKey]*PublicKey)
 
 //make(map[chatter.PublicKey](*chatter.Session))
@@ -283,7 +284,6 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 			sendingDHRatchet = c.Sessions[*partnerIdentity].MyDHRatchet
 		}*/
 
-	//此处需要更新sending chain
 	//newSendingDH := DHCombine( c.Sessions[*partnerIdentity].PartnerDHRatchet, &nextDHRatchet.PrivateKey )
 
 	c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
@@ -306,8 +306,6 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
 	message.Ciphertext = ciphertext
-
-	//发送链步进
 
 	//newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 
@@ -336,7 +334,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	data := message.EncodeAdditionalData()
 
-	//如果收到了超前的信息，先更新 c.Sessions[*message.Sender].StaleReceiveKeys，直到可以取到对应的rootchain了之后再说
 	for {
 		//fmt.Println(">>> message.Counter ", message.Counter)
 
@@ -347,8 +344,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		oldReceiverChain := c.Sessions[*message.Sender].ReceiveChain
 
 		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = oldReceiverChain
-
-		//接收链步进
 
 		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
@@ -386,36 +381,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	}
 
 	//remove the old chain
-	//接收链步进
 
 	return plaintext, err
-}
-
-func (c *Chatter) notifyPartnerUpdateKeyPairs(partnerIdentity *PublicKey, counter int) (string, error) {
-
-	theNewKeyPair := NewKeyPair()
-
-	sender, _ := sender_cache.Load(c.Identity.PublicKey)
-
-	senderMap := sender.(map[*PublicKey]map[int]*PublicKey)
-
-	count_publickey := senderMap[partnerIdentity]
-
-	count_publickey[counter] = &theNewKeyPair.PublicKey
-
-	senderMap[partnerIdentity] = count_publickey
-
-	sender_cache.Store(c.Identity.PublicKey, senderMap)
-
-	//Receiver update keypair cache
-
-	receiver_public_private, _ := receiver_cache.Load(partnerIdentity)
-
-	publickey_privatekey := receiver_public_private.(map[*PublicKey]*PrivateKey)
-
-	publickey_privatekey[&theNewKeyPair.PublicKey] = &theNewKeyPair.PrivateKey
-
-	receiver_cache.Store(c.Identity.PublicKey, publickey_privatekey)
-
-	return "", nil
 }

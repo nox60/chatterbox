@@ -263,6 +263,7 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
 
 	return rootKey, nil
+
 }
 
 // SendMessage is used to send the given plaintext string as a message.

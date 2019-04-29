@@ -225,6 +225,15 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		ReceiveChain:     fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
 	}
 
+	iTemp := 0
+
+	if iTemp < 10000 {
+		c.Sessions[*partnerIdentity].StaleReceiveKeys[iTemp] = c.Sessions[*partnerIdentity].ReceiveChain
+
+		//推进一次root, 推进一次ReceiveChain, 放入StaleReceiveKeys
+
+	}
+
 	return &bNewPairs.PublicKey, rootKey, nil
 }
 
@@ -261,6 +270,8 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	c.Sessions[*partnerIdentity].ReceiveChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 	c.Sessions[*partnerIdentity].SendChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
+
+	//用newKey 把al
 
 	return rootKey, nil
 
@@ -318,6 +329,9 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].SendChain.DeriveKey(KEY_LABEL)
 
 	//c.Sessions[*partnerIdentity].ReceiveChain = newReceivingChain
+
+	// root 步进
+	c.Sessions[*partnerIdentity].RootChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 
 	return message, nil
 }

@@ -271,9 +271,7 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 
 	//a2 b1
 	a2b1 := DHCombine(partnerEphemeral, &myNewKey.PrivateKey)
-
 	c.Sessions[*partnerIdentity].RootChain = CombineKeys(c.Sessions[*partnerIdentity].RootChain, a2b1)
-
 	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 
 	return rootKey, nil

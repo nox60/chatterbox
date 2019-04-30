@@ -220,7 +220,7 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		SendCounter:      0,
 		LastUpdate:       0,
 		ReceiveCounter:   0,
-		RootChain:        fff.DeriveKey(CHAIN_LABEL),
+		RootChain:        fff,
 		SendChain:        fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
 		ReceiveChain:     fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
 	}
@@ -257,7 +257,7 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	rootKey := kkk.DeriveKey(HANDSHAKE_CHECK_LABEL)
 
 	c.Sessions[*partnerIdentity].PartnerDHRatchet = partnerEphemeral
-	c.Sessions[*partnerIdentity].RootChain = kkk.DeriveKey(CHAIN_LABEL)
+	c.Sessions[*partnerIdentity].RootChain = kkk
 	c.Sessions[*partnerIdentity].ReceiveChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 	c.Sessions[*partnerIdentity].SendChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
@@ -265,12 +265,12 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	//用newKey 把alice 往前推一次, 这里的推进方式可能会有坑，回头在看
 
 	//步进root
-	c.Sessions[*partnerIdentity].RootChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
+	//c.Sessions[*partnerIdentity].RootChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 
 	//a2 b1
 	a2b1 := DHCombine(partnerEphemeral, &myNewKey.PrivateKey)
 
-	c.Sessions[*partnerIdentity].SendChain = CombineKeys(c.Sessions[*partnerIdentity].RootChain, a2b1).DeriveKey(KEY_LABEL)
+	c.Sessions[*partnerIdentity].SendChain = CombineKeys(c.Sessions[*partnerIdentity].RootChain, a2b1).DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 
 	return rootKey, nil
 
@@ -333,12 +333,12 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		//fmt.Println("bujin  ------   ")
 		//步进
 		//步进root
-		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
+		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
 		//a2 b1
 		a2b1 := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
 
-		c.Sessions[*message.Sender].ReceiveChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b1).DeriveKey(KEY_LABEL)
+		c.Sessions[*message.Sender].ReceiveChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b1).DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 
 		c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet
 
@@ -351,12 +351,12 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		c.Sessions[*message.Sender].LastUpdate = 0
 
 		//步进root
-		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
+		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
 		//a2 b1
 		a2b2 := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
 
-		c.Sessions[*message.Sender].SendChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b2).DeriveKey(KEY_LABEL)
+		c.Sessions[*message.Sender].SendChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b2).DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 
 	}
 
@@ -398,7 +398,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	//fmt.Println("......   : ", plaintext)
+	//fmt.Println("last update: ",message.LastUpdate, "......   : ", plaintext)
 
 	if err == nil {
 

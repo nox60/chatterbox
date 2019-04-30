@@ -466,6 +466,8 @@ func TestSynchronousChatVector(t *testing.T) {
 	}
 	CheckTestVector(t, message.NextDHRatchet.Fingerprint(), "34FAB4CF6AE3CFB23A9AF2C0ECE3C4E2", "NextDHRatchet")
 	CheckTestVector(t, []byte{byte(message.Counter)}, "06", "Counter")
+
+	fmt.Println(" message.LastUpdate      ", message.LastUpdate)
 	CheckTestVector(t, []byte{byte(message.LastUpdate)}, "04", "LastUpdate")
 	CheckTestVector(t, message.IV, "0102030405060708090A0B0C", "IV")
 	CheckTestVector(t, message.Ciphertext, "8E3E9C653B7DF0CA5613F4DB3ADC895FEA6CEDFDA4C7E3CD31070A", "Ciphertext")

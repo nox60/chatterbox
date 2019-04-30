@@ -39,6 +39,8 @@ import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
 	"errors"
+	"fmt"
+
 	//"fmt"
 	"sync"
 	//	"fmt" //un-comment if you want to do any debug printing.
@@ -300,7 +302,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		LastUpdate:    c.Sessions[*partnerIdentity].LastUpdate,
 	}
 
-	c.Sessions[*partnerIdentity].LastUpdate = c.Sessions[*partnerIdentity].LastUpdate + 1
+	//c.Sessions[*partnerIdentity].LastUpdate = c.Sessions[*partnerIdentity].SendCounter
 
 	data := message.EncodeAdditionalData()
 
@@ -311,6 +313,8 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
 	message.Ciphertext = ciphertext
+
+	fmt.Println("sendChain :  ", c.Sessions[*partnerIdentity].SendChain)
 
 	return message, nil
 }
@@ -328,10 +332,12 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	//判断对方的public key变化没有
 
+	oldReceivingChain := c.Sessions[*message.Sender].ReceiveChain
+
 	if message.NextDHRatchet != c.Sessions[*message.Sender].PartnerDHRatchet { //发生变化，要使用最新的public key步进
 
 		//fmt.Println("bujin  ------   ")
-		//步进
+		//接收链步进
 		//步进root
 		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
@@ -348,7 +354,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		c.Sessions[*message.Sender].MyDHRatchet = myNextPair
 
-		c.Sessions[*message.Sender].LastUpdate = 0
+		c.Sessions[*message.Sender].LastUpdate = c.Sessions[*message.Sender].SendCounter
 
 		//步进root
 		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
@@ -372,21 +378,18 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		//fmt.Println("luanxu ========   ")
 
 		//
-		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = c.Sessions[*message.Sender].ReceiveChain
 
-		//	fmt.Println("  c.Sessions[*message.Sender].ReceiveCounter   ",  c.Sessions[*message.Sender].ReceiveCounter)
+		if c.Sessions[*message.Sender].ReceiveCounter <= message.LastUpdate {
+			c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = oldReceivingChain
+		} else {
+			c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = c.Sessions[*message.Sender].ReceiveChain
+		}
 
 		c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 
 	}
 
-	//fmt.Println( "c.Sessions[*message.Sender].StaleReceiveKeys", c.Sessions[*message.Sender].StaleReceiveKeys)
-
 	receiveChain := c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter]
-
-	//fmt.Println("}}}}}}}      ",receiveChain)
-
-	//fmt.Println("receivecount: " , message.Counter,"  receiveChain: ", receiveChain)
 
 	if c.Sessions[*message.Sender].ReadMessages[message.Counter] != nil {
 		//fmt.Println("no  nulll....  ")
@@ -394,11 +397,9 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	}
 
-	//fmt.Println("receiveChain :  ",receiveChain)
-
 	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	//fmt.Println("last update: ",message.LastUpdate, "......   : ", plaintext)
+	fmt.Println(plaintext)
 
 	if err == nil {
 
@@ -408,8 +409,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		c.Sessions[*message.Sender].ReadMessages[message.Counter] = message
 	}
-
-	//remove the old chain
 
 	return plaintext, err
 }

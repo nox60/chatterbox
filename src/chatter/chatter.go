@@ -225,15 +225,6 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		ReceiveChain:     fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
 	}
 
-	iTemp := 0
-
-	if iTemp < 10000 {
-		c.Sessions[*partnerIdentity].StaleReceiveKeys[iTemp] = c.Sessions[*partnerIdentity].ReceiveChain
-
-		//推进一次root, 推进一次ReceiveChain, 放入StaleReceiveKeys
-
-	}
-
 	return &bNewPairs.PublicKey, rootKey, nil
 }
 
@@ -271,7 +262,15 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	c.Sessions[*partnerIdentity].SendChain = kkk.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
 	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
 
-	//用newKey 把al
+	//用newKey 把alice 往前推一次, 这里的推进方式可能会有坑，回头在看
+
+	//步进root
+	c.Sessions[*partnerIdentity].RootChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
+
+	//a2 b1
+	a2b1 := DHCombine(partnerEphemeral, &myNewKey.PrivateKey)
+
+	c.Sessions[*partnerIdentity].SendChain = CombineKeys(c.Sessions[*partnerIdentity].RootChain, a2b1).DeriveKey(KEY_LABEL)
 
 	return rootKey, nil
 
@@ -288,15 +287,7 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	iv := NewIV()
 
-	/*
-		sendingDHRatchet := NewKeyPair()
-
-		if c.Sessions[*partnerIdentity].SendCounter == 0 {
-			sendingDHRatchet = c.Sessions[*partnerIdentity].MyDHRatchet
-		}*/
-
-	//newSendingDH := DHCombine( c.Sessions[*partnerIdentity].PartnerDHRatchet, &nextDHRatchet.PrivateKey )
-
+	//c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
 	c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
 
 	message := &Message{
@@ -306,32 +297,20 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		IV:            iv,
 		Counter:       c.Sessions[*partnerIdentity].SendCounter,
 		NextDHRatchet: &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey,
+		LastUpdate:    c.Sessions[*partnerIdentity].LastUpdate,
 	}
+
+	c.Sessions[*partnerIdentity].LastUpdate = c.Sessions[*partnerIdentity].LastUpdate + 1
 
 	data := message.EncodeAdditionalData()
 
 	encrypt := c.Sessions[*partnerIdentity].SendChain
 
-	//fmt.Println("sendcount: " , c.Sessions[*partnerIdentity].SendCounter,"  sendchain: ", encrypt)
+	//fmt.Println("encrypt :  ",encrypt)
 
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
 	message.Ciphertext = ciphertext
-
-	//newRootChain := c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
-
-	//newSendingChain := newRootChain.DeriveKey(KEY_LABEL)
-
-	//newReceivingChain := newRootChain.DeriveKey(KEY_LABEL)
-
-	//c.Sessions[*partnerIdentity].RootChain = newRootChain
-
-	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].SendChain.DeriveKey(KEY_LABEL)
-
-	//c.Sessions[*partnerIdentity].ReceiveChain = newReceivingChain
-
-	// root 步进
-	c.Sessions[*partnerIdentity].RootChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 
 	return message, nil
 }
@@ -347,30 +326,65 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	data := message.EncodeAdditionalData()
 
-	for {
-		//fmt.Println(">>> message.Counter ", message.Counter)
+	//判断对方的public key变化没有
 
-		if c.Sessions[*message.Sender].ReceiveCounter+1 > message.Counter {
+	if message.NextDHRatchet != c.Sessions[*message.Sender].PartnerDHRatchet { //发生变化，要使用最新的public key步进
+
+		//fmt.Println("bujin  ------   ")
+		//步进
+		//步进root
+		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
+
+		//a2 b1
+		a2b1 := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
+
+		c.Sessions[*message.Sender].ReceiveChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b1).DeriveKey(KEY_LABEL)
+
+		c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet
+
+		//发送链步进
+
+		myNextPair := NewKeyPair()
+
+		c.Sessions[*message.Sender].MyDHRatchet = myNextPair
+
+		c.Sessions[*message.Sender].LastUpdate = 0
+
+		//步进root
+		c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
+
+		//a2 b1
+		a2b2 := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
+
+		c.Sessions[*message.Sender].SendChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b2).DeriveKey(KEY_LABEL)
+
+	}
+
+	// 判断是否收到乱序的信息
+
+	for {
+
+		//fmt.Println("c.Sessions[*message.Sender].ReceiveCounter  ",c.Sessions[*message.Sender].ReceiveCounter, " || ", message.Counter)
+		if c.Sessions[*message.Sender].ReceiveCounter > message.Counter {
 			break
 		}
 
-		oldReceiverChain := c.Sessions[*message.Sender].ReceiveChain
+		//fmt.Println("luanxu ========   ")
 
-		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter+1] = oldReceiverChain
+		//
+		c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = c.Sessions[*message.Sender].ReceiveChain
 
-		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
-
-		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].ReceiveChain.DeriveKey(KEY_LABEL)
-
-		//c.Sessions[*message.Sender].SendChain = c.Sessions[*message.Sender].RootChain.DeriveKey(KEY_LABEL)
+		//	fmt.Println("  c.Sessions[*message.Sender].ReceiveCounter   ",  c.Sessions[*message.Sender].ReceiveCounter)
 
 		c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 
 	}
 
-	//fmt.Print(" ======   ",    c.Sessions[*message.Sender].StaleReceiveKeys)
+	//fmt.Println( "c.Sessions[*message.Sender].StaleReceiveKeys", c.Sessions[*message.Sender].StaleReceiveKeys)
 
 	receiveChain := c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter]
+
+	//fmt.Println("}}}}}}}      ",receiveChain)
 
 	//fmt.Println("receivecount: " , message.Counter,"  receiveChain: ", receiveChain)
 
@@ -380,9 +394,11 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	}
 
+	//fmt.Println("receiveChain :  ",receiveChain)
+
 	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	//c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter] = NewSymmetricKey()
+	//fmt.Println("......   : ", plaintext)
 
 	if err == nil {
 

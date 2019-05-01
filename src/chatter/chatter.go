@@ -321,6 +321,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
+	fmt.Println("msg count: ", message.Counter, " recCount: ", c.Sessions[*message.Sender].ReceiveCounter)
+
 	data := message.EncodeAdditionalData()
 
 	if message.Counter > c.Sessions[*message.Sender].ReceiveCounter {
@@ -373,6 +375,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 			//从 receiveCount -> lastUpdate 都设为旧值
 
+			fmt.Println(">>> --- a")
+
 			for {
 
 				c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = oldReceivingChain
@@ -395,6 +399,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		//从 receiveCount -> msgCount 设为新
 		for { //填新的那一段
 
+			fmt.Println(">>> --- a")
+
 			if nil == c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] {
 
 				c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = newReceiveChain
@@ -402,7 +408,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 				newReceiveChain = newReceiveChain.DeriveKey(CHAIN_LABEL)
 
 				c.Sessions[*message.Sender].ReceiveChain = newReceiveChain
-
 			}
 
 			if c.Sessions[*message.Sender].ReceiveCounter >= message.Counter {
@@ -418,6 +423,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		if c.Sessions[*message.Sender].ReceiveCounter <= message.Counter {
 			for {
+
+				fmt.Println(">>> --- old")
 
 				//fmt.Println("c: c.Sessions[*message.Sender].ReceiveCounter ", c.Sessions[*message.Sender].ReceiveCounter )
 

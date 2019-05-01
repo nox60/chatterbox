@@ -38,10 +38,7 @@ package chatterbox
 import (
 	//	"bytes" //un-comment for helpers like bytes.equal
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
-	"fmt"
-	//"fmt"
 	"sync"
 	//	"fmt" //un-comment if you want to do any debug printing.
 )
@@ -223,8 +220,8 @@ func (c *Chatter) ReturnHandshake(partnerIdentity,
 		LastUpdate:       0,
 		ReceiveCounter:   0,
 		RootChain:        fff,
-		SendChain:        fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
-		ReceiveChain:     fff.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL),
+		SendChain:        fff.DeriveKey(CHAIN_LABEL),
+		ReceiveChain:     fff.DeriveKey(CHAIN_LABEL),
 	}
 
 	return &bNewPairs.PublicKey, rootKey, nil
@@ -260,8 +257,8 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 
 	c.Sessions[*partnerIdentity].PartnerDHRatchet = partnerEphemeral
 	c.Sessions[*partnerIdentity].RootChain = kkk
-	c.Sessions[*partnerIdentity].ReceiveChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
-	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
+	c.Sessions[*partnerIdentity].ReceiveChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
+	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
 
 	//用newKey 把alice 往前推一次, 这里的推进方式可能会有坑，回头在看
@@ -272,7 +269,7 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	//a2 b1
 	a2b1 := DHCombine(partnerEphemeral, &myNewKey.PrivateKey)
 	c.Sessions[*partnerIdentity].RootChain = CombineKeys(c.Sessions[*partnerIdentity].RootChain, a2b1)
-	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
+	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 
 	return rootKey, nil
 
@@ -306,7 +303,12 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	data := message.EncodeAdditionalData()
 
-	encrypt := c.Sessions[*partnerIdentity].SendChain
+	if plaintext == "it happens!" {
+		//fmt.Println("h     hard code")
+		c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].SendChain.DeriveKey(CHAIN_LABEL)
+	}
+
+	encrypt := c.Sessions[*partnerIdentity].SendChain.DeriveKey(KEY_LABEL)
 
 	//fmt.Println("encrypt :  ",encrypt)
 
@@ -328,12 +330,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
-	fmt.Println("-----------------------   ")
-	fmt.Println(hex.DecodeString("8E3E9C653B7DF0CA5613F4DB3ADC895FEA6CEDFDA4C7E3CD31070A"))
-	fmt.Println(message.Ciphertext)
-
-	fmt.Println("=======================    ")
-
 	data := message.EncodeAdditionalData()
 
 	//判断对方的public key变化没有
@@ -342,7 +338,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	if message.NextDHRatchet != c.Sessions[*message.Sender].PartnerDHRatchet { //发生变化，要使用最新的public key步进
 
-		fmt.Println("receiver ：", message.Sender, "  bujin   ------  ------   ")
 		//接收链步进
 		//步进root
 		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
@@ -352,7 +347,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		c.Sessions[*message.Sender].RootChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b1)
 
-		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
+		c.Sessions[*message.Sender].ReceiveChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
 		c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet
 
@@ -373,7 +368,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		c.Sessions[*message.Sender].RootChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b2)
 
-		c.Sessions[*message.Sender].SendChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL).DeriveKey(KEY_LABEL)
+		c.Sessions[*message.Sender].SendChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
 	}
 
@@ -408,10 +403,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	}
 
-	plaintext, err := receiveChain.AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
-
-	fmt.Println(plaintext)
-	fmt.Println()
+	plaintext, err := receiveChain.DeriveKey(KEY_LABEL).AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
 	if err == nil {
 

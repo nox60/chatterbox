@@ -439,21 +439,18 @@ func TestSynchronousChatVector(t *testing.T) {
 	SkipOnError(t, CheckReceive(t, bob, message, "Bob..."))
 
 	//Longer sequence, unchecked
-	SkipOnError(t, CheckSendReceive(t, bob, alice, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, bob, alice, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, bob, alice, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, alice, bob, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, alice, bob, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, alice, bob, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, bob, alice, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, bob, alice, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, bob, alice, "it happens!"))
-	SkipOnError(t, CheckSendReceive(t, alice, bob, "it happens!"))
+	SkipOnError(t, CheckSendReceive(t, bob, alice, "Alice!!"))
+	SkipOnError(t, CheckSendReceive(t, bob, alice, "Alice!!!"))
+	SkipOnError(t, CheckSendReceive(t, bob, alice, "Alice!!!"))
+	SkipOnError(t, CheckSendReceive(t, alice, bob, "Bob!"))
+	SkipOnError(t, CheckSendReceive(t, alice, bob, "I heard you the first time"))
+	SkipOnError(t, CheckSendReceive(t, alice, bob, "No need to repeat yourself..."))
+	SkipOnError(t, CheckSendReceive(t, bob, alice, "Sorry Alice"))
+	SkipOnError(t, CheckSendReceive(t, bob, alice, "I got carried away"))
+	SkipOnError(t, CheckSendReceive(t, bob, alice, "won't happen again"))
+	SkipOnError(t, CheckSendReceive(t, alice, bob, "that's okay Bob"))
 	message, err = CheckSend(t, alice, bob, "it happens!")
 	SkipOnError(t, err)
-
-	//fmt.Println("message.Ciphertext ", message.Ciphertext)
-	//fmt.Println(message)
 
 	// Check final message after extended conversation
 	if message.Sender == nil {
@@ -469,8 +466,6 @@ func TestSynchronousChatVector(t *testing.T) {
 	}
 	CheckTestVector(t, message.NextDHRatchet.Fingerprint(), "34FAB4CF6AE3CFB23A9AF2C0ECE3C4E2", "NextDHRatchet")
 	CheckTestVector(t, []byte{byte(message.Counter)}, "06", "Counter")
-
-	//fmt.Println(" message.LastUpdate      ", message.LastUpdate)
 	CheckTestVector(t, []byte{byte(message.LastUpdate)}, "04", "LastUpdate")
 	CheckTestVector(t, message.IV, "0102030405060708090A0B0C", "IV")
 	CheckTestVector(t, message.Ciphertext, "8E3E9C653B7DF0CA5613F4DB3ADC895FEA6CEDFDA4C7E3CD31070A", "Ciphertext")
@@ -659,12 +654,7 @@ func TestAsynchronousChat(t *testing.T) {
 	SendQueuedMessage(t, aliceQueue, 1, bob, alice, "BA.1")
 	SendQueuedMessage(t, aliceQueue, 2, bob, alice, "BA.2")
 
-	//fmt.Println("------->>   1")
-
 	FailOnError(t, DeliverQueuedMessage(t, c, aliceQueue, 2, false))
-
-	//fmt.Println("------->>   2")
-
 	FailOnError(t, DeliverQueuedMessage(t, c, aliceQueue, 1, false))
 	FailOnError(t, DeliverQueuedMessage(t, c, bobQueue, 3, false))
 

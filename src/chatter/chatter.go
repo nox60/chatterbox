@@ -285,6 +285,9 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 
 	iv := NewIV()
 
+	fmt.Println("nextDH  : ", &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey)
+	fmt.Println("partner : ", c.Sessions[*partnerIdentity].PartnerDHRatchet)
+
 	c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
 
 	message := &Message{
@@ -322,6 +325,9 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	}
 
 	fmt.Println("msg count: ", message.Counter, " recCount: ", c.Sessions[*message.Sender].ReceiveCounter)
+	fmt.Println("nextDH         : ", message.NextDHRatchet)
+	fmt.Println("mycuDH         : ", c.Sessions[*message.Sender].MyDHRatchet.PublicKey)
+	fmt.Println("partnerCurrent : ", c.Sessions[*message.Sender].PartnerDHRatchet)
 
 	data := message.EncodeAdditionalData()
 
@@ -356,6 +362,8 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		//发送链步进
 		//b2
 		myNextPair := NewKeyPair()
+
+		fmt.Println("newKey      : ", myNextPair.PublicKey)
 
 		c.Sessions[*message.Sender].MyDHRatchet = myNextPair
 
@@ -399,7 +407,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		//从 receiveCount -> msgCount 设为新
 		for { //填新的那一段
 
-			fmt.Println(">>> --- a")
+			fmt.Println(">>> --- b")
 
 			if nil == c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] {
 
@@ -463,6 +471,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	fmt.Println(message.Sender.Fingerprint(), " to >> ", message.Receiver.Fingerprint())
 	fmt.Println("plaintext, ", plaintext)
-
+	fmt.Println(c.Sessions[*message.Sender].StaleReceiveKeys)
 	return plaintext, err
 }

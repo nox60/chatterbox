@@ -40,7 +40,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"sync"
 	//	"fmt" //un-comment if you want to do any debug printing.
 )
 
@@ -58,7 +57,7 @@ const KEY_LABEL = 0x03
 
 //var KEY_SERVER map[PublicKey]*PublicKey
 
-var global_public_keys sync.Map
+//var global_public_keys sync.Map
 
 /*
 var sender_cache sync.Map
@@ -141,7 +140,7 @@ func NewChatter() *Chatter {
 	c.Identity = NewKeyPair()
 	c.Sessions = make(map[PublicKey]*Session)
 
-	global_public_keys.Store(c.Identity.PublicKey, &c.Identity.PublicKey)
+	//global_public_keys.Store(c.Identity.PublicKey, &c.Identity.PublicKey)
 
 	return c
 }
@@ -307,12 +306,15 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	//fmt.Println("h     hard code")
 	//}
 
-	fmt.Println("sende ttt  ", c.Sessions[*partnerIdentity].SendChain)
+	fmt.Println("sending  ", c.Sessions[*partnerIdentity].SendChain)
 
 	encrypt := c.Sessions[*partnerIdentity].SendChain.DeriveKey(KEY_LABEL)
 
 	fmt.Println("encrypt :  ", encrypt)
+
 	fmt.Println("public key: ", message.NextDHRatchet)
+
+	fmt.Println("partner public key :", c.Sessions[*partnerIdentity].PartnerDHRatchet)
 
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
@@ -338,7 +340,9 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	fmt.Println("Message Arrived, counter ", message.Counter, ", receiverCounter", c.Sessions[*message.Sender].ReceiveCounter, "msg body: ", message.Ciphertext, "message LastUpdate: ", message.LastUpdate, "public key: ", message.NextDHRatchet)
 	fmt.Println("From to : ", message.Sender.X, " to >> ", message.Receiver.X)
 	fmt.Println("Box     : ", c.Sessions[*message.Sender].StaleReceiveKeys)
-	fmt.Println("c.Sessions[*message.Sender].PartnerDHRatchet : ", c.Sessions[*message.Sender].PartnerDHRatchet)
+	//fmt.Println("c.Sessions[*message.Sender].PartnerDHRatchet : ", c.Sessions[*message.Sender].PartnerDHRatchet)
+	fmt.Println("c.Sessions[*message.Sender].PublicKey : ", c.Sessions[*message.Sender].MyDHRatchet.PublicKey)
+
 	data := message.EncodeAdditionalData()
 
 	if message.Counter > c.Sessions[*message.Sender].ReceiveCounter {
@@ -406,7 +410,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 				c.Sessions[*message.Sender].ReceiveChain = oldReceivingChain
 
 				if c.Sessions[*message.Sender].ReceiveCounter >= message.LastUpdate {
-					c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
+					//c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 					break
 				}
 
@@ -414,6 +418,10 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 			}
 
+		}
+
+		if c.Sessions[*message.Sender].ReceiveCounter < message.Counter {
+			c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 		}
 
 		//从 receiveCount -> msgCount 设为新
@@ -427,7 +435,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 				c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = newReceiveChain
 
-				fmt.Println("kk1: ", newReceiveChain)
+				//fmt.Println("kk1: ", newReceiveChain)
 
 				newReceiveChain = newReceiveChain.DeriveKey(CHAIN_LABEL)
 
@@ -480,6 +488,9 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	if c.Sessions[*message.Sender].ReadMessages[message.Counter] != nil {
 		return "", errors.New("error")
 	}
+
+	fmt.Println("receiveChain", receiveChain)
+	fmt.Println(message.Ciphertext, data, message.IV)
 
 	plaintext, err := receiveChain.DeriveKey(KEY_LABEL).AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 

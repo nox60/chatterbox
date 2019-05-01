@@ -585,7 +585,7 @@ func SendQueuedMessage(t *testing.T,
 		return err
 	}
 
-	fmt.Println("messageBody: ", message.Ciphertext)
+	//fmt.Println("messageBody: ", message.Ciphertext)
 
 	if VERBOSE {
 		fmt.Printf("Message \"%s\" from %s to %s sent and added to queue\n",
@@ -616,7 +616,7 @@ func DeliverQueuedMessage(t *testing.T,
 		}
 	}
 
-	fmt.Println("i Value: ", i)
+	//fmt.Println("i Value: ", i)
 
 	if deliveryError {
 		q[i].Ciphertext[3] ^= 0x08
@@ -718,10 +718,10 @@ func TestAsynchronousChatExtended(t *testing.T) {
 			}
 
 			fmt.Println("")
-			fmt.Println("send  >>>> M", i)
+			fmt.Println("send  >>>> M", i, "")
 			SendQueuedMessage(t, queue, queueLength, c1, c2, fmt.Sprintf("M %d", i))
 
-			fmt.Println(c1.Identity.PublicKey.X, " to >> ", c2.Identity.PublicKey.Y)
+			fmt.Println(c1.Identity.PublicKey.Fingerprint(), " to >> ", c2.Identity.PublicKey.Fingerprint())
 			queueLength += 1
 		} else if queueLength > 0 {
 			fmt.Println("")

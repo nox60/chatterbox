@@ -93,7 +93,6 @@ type Session struct {
 	SendCounter      int
 	LastUpdate       int
 	ReceiveCounter   int
-	ReadMessages     map[int]*Message
 }
 
 // Message represents a message as sent over an untrusted network.
@@ -298,27 +297,12 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 		LastUpdate:    c.Sessions[*partnerIdentity].LastUpdate,
 	}
 
-	//c.Sessions[*partnerIdentity].LastUpdate = c.Sessions[*partnerIdentity].SendCounter
-
 	data := message.EncodeAdditionalData()
-
-	//if plaintext == "it happens!" {
-	//fmt.Println("h     hard code")
-	//}
-
-	fmt.Println("sending  ", c.Sessions[*partnerIdentity].SendChain)
 
 	encrypt := c.Sessions[*partnerIdentity].SendChain.DeriveKey(KEY_LABEL)
 
-	fmt.Println("encrypt :  ", encrypt)
-
-	fmt.Println("public key: ", message.NextDHRatchet)
-
-	fmt.Println("partner public key :", c.Sessions[*partnerIdentity].PartnerDHRatchet)
-
 	ciphertext := encrypt.AuthenticatedEncrypt(plaintext, data, iv)
 
-	fmt.Println("ciphertext:  ", ciphertext)
 	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].SendChain.DeriveKey(CHAIN_LABEL)
 
 	message.Ciphertext = ciphertext
@@ -336,12 +320,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 	if _, exists := c.Sessions[*message.Sender]; !exists {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
-
-	fmt.Println("Message Arrived, counter ", message.Counter, ", receiverCounter", c.Sessions[*message.Sender].ReceiveCounter, "msg body: ", message.Ciphertext, "message LastUpdate: ", message.LastUpdate, "public key: ", message.NextDHRatchet)
-	fmt.Println("From to : ", message.Sender.X, " to >> ", message.Receiver.X)
-	fmt.Println("Box     : ", c.Sessions[*message.Sender].StaleReceiveKeys)
-	//fmt.Println("c.Sessions[*message.Sender].PartnerDHRatchet : ", c.Sessions[*message.Sender].PartnerDHRatchet)
-	fmt.Println("c.Sessions[*message.Sender].PublicKey : ", c.Sessions[*message.Sender].MyDHRatchet.PublicKey)
 
 	data := message.EncodeAdditionalData()
 
@@ -393,15 +371,9 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		if c.Sessions[*message.Sender].ReceiveCounter <= message.LastUpdate { //填充旧的那一段
 
-			fmt.Println("a =----------  ")
-
 			//从 receiveCount -> lastUpdate 都设为旧值
 
-			fmt.Println("message.LastUpdate: ", message.LastUpdate)
-
 			for {
-
-				fmt.Println("a: c.Sessions[*message.Sender].ReceiveCounter ", c.Sessions[*message.Sender].ReceiveCounter)
 
 				c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = oldReceivingChain
 
@@ -420,22 +392,12 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		}
 
-		if c.Sessions[*message.Sender].ReceiveCounter < message.Counter {
-			c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
-		}
-
 		//从 receiveCount -> msgCount 设为新
 		for { //填新的那一段
-
-			fmt.Println("b =----------  ")
-
-			fmt.Println("b: c.Sessions[*message.Sender].ReceiveCounter ", c.Sessions[*message.Sender].ReceiveCounter)
 
 			if nil == c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] {
 
 				c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = newReceiveChain
-
-				//fmt.Println("kk1: ", newReceiveChain)
 
 				newReceiveChain = newReceiveChain.DeriveKey(CHAIN_LABEL)
 
@@ -452,9 +414,6 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		}
 
 	} else { //没变化
-
-		fmt.Println("no change......")
-
 		//从 receiveCount -> messageCount 都设为旧值
 
 		if c.Sessions[*message.Sender].ReceiveCounter <= message.Counter {
@@ -485,35 +444,18 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	receiveChain := c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter]
 
-	if c.Sessions[*message.Sender].ReadMessages[message.Counter] != nil {
+	if receiveChain == nil {
 		return "", errors.New("error")
 	}
 
-	fmt.Println("receiveChain", receiveChain)
-	fmt.Println(message.Ciphertext, data, message.IV)
-
 	plaintext, err := receiveChain.DeriveKey(KEY_LABEL).AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
-	fmt.Println("receiveChain : ", receiveChain.DeriveKey(KEY_LABEL))
-	fmt.Println("plainText: ", plaintext)
+	if plaintext != "" {
+		c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter] = nil
+	}
 
-	/*
-		if plaintext == "" {
-
-			c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] = nil
-
-			c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter - 1
-		}*/
-
-	/*
-		if err == nil {
-
-			if c.Sessions[*message.Sender].ReadMessages == nil {
-				c.Sessions[*message.Sender].ReadMessages = make(map[int](*Message))
-			}
-
-			c.Sessions[*message.Sender].ReadMessages[message.Counter] = message
-		}*/
+	fmt.Println(message.Sender.Fingerprint(), " to >> ", message.Receiver.Fingerprint())
+	fmt.Println("plaintext, ", plaintext)
 
 	return plaintext, err
 }

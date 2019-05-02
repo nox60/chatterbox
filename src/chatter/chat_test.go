@@ -717,15 +717,10 @@ func TestAsynchronousChatExtended(t *testing.T) {
 				continue
 			}
 
-			fmt.Println("")
-			fmt.Println("send  >>>> M", i, "")
 			SendQueuedMessage(t, queue, queueLength, c1, c2, fmt.Sprintf("M %d", i))
 
-			fmt.Println(c1.Identity.PublicKey.Fingerprint(), " to >> ", c2.Identity.PublicKey.Fingerprint())
 			queueLength += 1
 		} else if queueLength > 0 {
-			fmt.Println("")
-			fmt.Println(">>>> deliver ")
 
 			// deliver a random queued message
 			j := rand.Int() % queueLength

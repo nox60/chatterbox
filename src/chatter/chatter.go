@@ -260,12 +260,6 @@ func (c *Chatter) FinalizeHandshake(partnerIdentity,
 	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
 	c.Sessions[*partnerIdentity].MyDHRatchet = myNewKey
 
-	//用newKey 把alice 往前推一次, 这里的推进方式可能会有坑，回头在看
-
-	//步进root
-	//c.Sessions[*partnerIdentity].RootChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
-
-	//a2 b1
 	a2b1 := DHCombine(partnerEphemeral, &myNewKey.PrivateKey)
 	c.Sessions[*partnerIdentity].RootChain = CombineKeys(c.Sessions[*partnerIdentity].RootChain, a2b1)
 	c.Sessions[*partnerIdentity].SendChain = c.Sessions[*partnerIdentity].RootChain.DeriveKey(CHAIN_LABEL)
@@ -284,9 +278,6 @@ func (c *Chatter) SendMessage(partnerIdentity *PublicKey,
 	}
 
 	iv := NewIV()
-
-	fmt.Println("nextDH  : ", &c.Sessions[*partnerIdentity].MyDHRatchet.PublicKey)
-	fmt.Println("partner : ", c.Sessions[*partnerIdentity].PartnerDHRatchet)
 
 	c.Sessions[*partnerIdentity].SendCounter = c.Sessions[*partnerIdentity].SendCounter + 1
 
@@ -324,29 +315,19 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 		return "", errors.New("Can't receive message from partner with no open session")
 	}
 
-	fmt.Println("msg count: ", message.Counter, " recCount: ", c.Sessions[*message.Sender].ReceiveCounter)
-	fmt.Println("nextDH         : ", message.NextDHRatchet)
-	fmt.Println("mycuDH         : ", c.Sessions[*message.Sender].MyDHRatchet.PublicKey)
-	fmt.Println("partnerCurrent : ", c.Sessions[*message.Sender].PartnerDHRatchet)
-
 	data := message.EncodeAdditionalData()
 
 	if message.Counter > c.Sessions[*message.Sender].ReceiveCounter {
 		c.Sessions[*message.Sender].ReceiveCounter = c.Sessions[*message.Sender].ReceiveCounter + 1
 	}
 
-	//判断对方的public key变化没有
+	fmt.Println("lastUpdate: ", message.LastUpdate)
 
 	oldReceivingChain := c.Sessions[*message.Sender].ReceiveChain
 
 	newReceiveChain := oldReceivingChain
 
 	if message.NextDHRatchet != c.Sessions[*message.Sender].PartnerDHRatchet { //发生变化，要使用最新的public key步进
-
-		//fmt.Println("Has changes.....")
-		//接收链步进
-		//步进root
-		//c.Sessions[*message.Sender].RootChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
 		//a2 b1
 		a2b1 := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
@@ -359,31 +340,19 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		c.Sessions[*message.Sender].PartnerDHRatchet = message.NextDHRatchet
 
-		//发送链步进
-		//b2
 		myNextPair := NewKeyPair()
-
-		fmt.Println("newKey      : ", myNextPair.PublicKey)
 
 		c.Sessions[*message.Sender].MyDHRatchet = myNextPair
 
 		c.Sessions[*message.Sender].LastUpdate = c.Sessions[*message.Sender].SendCounter
 
-		//步进root
-		//a2 b2
 		a2b2 := DHCombine(message.NextDHRatchet, &c.Sessions[*message.Sender].MyDHRatchet.PrivateKey)
 
 		c.Sessions[*message.Sender].RootChain = CombineKeys(c.Sessions[*message.Sender].RootChain, a2b2)
 
 		c.Sessions[*message.Sender].SendChain = c.Sessions[*message.Sender].RootChain.DeriveKey(CHAIN_LABEL)
 
-		//有变化
-
 		if c.Sessions[*message.Sender].ReceiveCounter <= message.LastUpdate { //填充旧的那一段
-
-			//从 receiveCount -> lastUpdate 都设为旧值
-
-			fmt.Println(">>> --- a")
 
 			for {
 
@@ -404,10 +373,7 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		}
 
-		//从 receiveCount -> msgCount 设为新
-		for { //填新的那一段
-
-			fmt.Println(">>> --- b")
+		for {
 
 			if nil == c.Sessions[*message.Sender].StaleReceiveKeys[c.Sessions[*message.Sender].ReceiveCounter] {
 
@@ -426,13 +392,10 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 		}
 
-	} else { //没变化
-		//从 receiveCount -> messageCount 都设为旧值
+	} else {
 
 		if c.Sessions[*message.Sender].ReceiveCounter <= message.Counter {
 			for {
-
-				fmt.Println(">>> --- old")
 
 				//fmt.Println("c: c.Sessions[*message.Sender].ReceiveCounter ", c.Sessions[*message.Sender].ReceiveCounter )
 
@@ -465,12 +428,13 @@ func (c *Chatter) ReceiveMessage(message *Message) (string, error) {
 
 	plaintext, err := receiveChain.DeriveKey(KEY_LABEL).AuthenticatedDecrypt(message.Ciphertext, data, message.IV)
 
+	if message.LastUpdate == 0 {
+		c.Sessions[*message.Sender].StaleReceiveKeys[-1] = c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter]
+	}
+
 	if plaintext != "" {
 		c.Sessions[*message.Sender].StaleReceiveKeys[message.Counter] = nil
 	}
 
-	fmt.Println(message.Sender.Fingerprint(), " to >> ", message.Receiver.Fingerprint())
-	fmt.Println("plaintext, ", plaintext)
-	fmt.Println(c.Sessions[*message.Sender].StaleReceiveKeys)
 	return plaintext, err
 }

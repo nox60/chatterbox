@@ -75,6 +75,10 @@ networks:
 
 services:
 
+
+  # yaml 说明文档：https://www.jianshu.com/p/97222440cd08
+  # - 代表数组
+
   orderer2.example.com:
     extends:
       file: base/peer-base.yaml
@@ -129,9 +133,13 @@ services:
     - byfn
     volumes:
         - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+        # 所挂载的上帝区块需要先生成
         - ./crypto-config/ordererOrganizations/example.com/orderers/orderer5.example.com/msp:/var/hyperledger/orderer/msp
+        # msp信息也是其他地方生成的，有待考证
         - ./crypto-config/ordererOrganizations/example.com/orderers/orderer5.example.com/tls/:/var/hyperledger/orderer/tls
+        # tls是加密信息？
         - orderer5.example.com:/var/hyperledger/production/orderer
+        # orderer?
     ports:
     - 11050:7050
 

@@ -7,9 +7,10 @@
 # 操作说明
 
 byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compose-file>] [-s <dbtype>] [-l <language>] [-o <consensus-type>] [-i <imagetag>] [-a] [-n] [-v] 
-  <mode> - one of 'up', 'down', 'restart', 'generate' or 'upgrade'
-    - 'up' - bring up the network with docker-compose up
-    - 'down' - clear the network with docker-compose down
+
+<mode> 
+    - 'up' - bring up the network with docker-compose up 通过docker-compose方式启动网络
+    - 'down' - clear the network with docker-compose down   关掉并移除所有容器并且清理环境（此处需要分析脚本）
     - 'restart' - restart the network
     - 'generate' - generate required certificates and genesis block
     - 'upgrade'  - upgrade the network from version 1.3.x to 1.4.0

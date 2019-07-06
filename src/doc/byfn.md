@@ -8,7 +8,7 @@
 
 byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compose-file>] [-s <dbtype>] [-l <language>] [-o <consensus-type>] [-i <imagetag>] [-a] [-n] [-v] 
 
-<mode> 
+<mode>  例子 ./byfn.sh up 
 
 - up - bring up the network with docker-compose up 通过docker-compose方式启动网络
 
@@ -19,6 +19,7 @@ byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compo
 - generate - generate required certificates and genesis block 生成所有的证书和上帝区块
 
 - upgrade  - upgrade the network from version 1.3.x to 1.4.0 将网络从1.3.x版本升级到1.4.0
+
 
   -c <channel name> - channel name to use (defaults to \"mychannel\")
   -t <timeout> - CLI timeout duration in seconds (defaults to 10)

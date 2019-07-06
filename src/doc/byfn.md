@@ -10,10 +10,15 @@ byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compo
 
 <mode> 
     - 'up' - bring up the network with docker-compose up 通过docker-compose方式启动网络
+
     - 'down' - clear the network with docker-compose down   关掉并移除所有容器并且清理环境（此处需要分析脚本）
-    - 'restart' - restart the network
-    - 'generate' - generate required certificates and genesis block
-    - 'upgrade'  - upgrade the network from version 1.3.x to 1.4.0
+
+    - 'restart' - restart the network   重新启动网络
+
+    - 'generate' - generate required certificates and genesis block 生成所有的证书和上帝区块
+
+    - 'upgrade'  - upgrade the network from version 1.3.x to 1.4.0 将网络从1.3.x版本升级到1.4.0
+
   -c <channel name> - channel name to use (defaults to \"mychannel\")
   -t <timeout> - CLI timeout duration in seconds (defaults to 10)
   -d <delay> - delay duration in seconds (defaults to 3)

@@ -30,8 +30,9 @@ byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compo
   -f <docker-compose-file> - specify which docker-compose file use (defaults to docker-compose-cli.yaml)
 
   -s <dbtype> - the database backend to use: goleveldb (default) or couchdb
-  
+
   -l <language> - the chaincode language: golang (default) or node
+  
   -o <consensus-type> - the consensus-type of the ordering service: solo (default), kafka, or etcdraft
   -i <imagetag> - the tag to be used to launch the network (defaults to \"latest\")
   -a - launch certificate authorities (no certificate authorities are launched by default)

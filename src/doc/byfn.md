@@ -45,6 +45,12 @@ byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compo
 
 byfn.sh -h 打印以上信息
 
+## 核心流程
+
+1. 上帝区块先生成
+2. 生成msp
+3. 生成orderer的各个容器
+
 
 ### 通过etcdraft的方式的orderer
 

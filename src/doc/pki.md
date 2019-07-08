@@ -44,3 +44,9 @@ https://hyperledger-fabric-ca.readthedocs.io/en/release-1.4/#
 
 reading
 https://hyperledger-fabric.readthedocs.io/en/latest/membership/membership.html
+
+local MSP
+
+channel MSP
+
+The exclusive relationship between an organization and its MSP makes it sensible to name the MSP after the organization, a convention you’ll find adopted in most policy configurations. 

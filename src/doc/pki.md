@@ -18,3 +18,7 @@ PKI核心流程：
 https://blog.csdn.net/liuhuiyi/article/details/7776825
 
 
+a PKI provides a list of identities, 
+
+and an MSP says which of these are members of a given organization that participates in the network.
+

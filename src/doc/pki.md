@@ -31,3 +31,5 @@ integrity
 impersonator
 
 disseminated
+
+Intermediate

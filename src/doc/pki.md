@@ -22,3 +22,8 @@ a PKI provides a list of identities,
 
 and an MSP says which of these are members of a given organization that participates in the network.
 
+核心单词：
+
+tamper
+
+integrity

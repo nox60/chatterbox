@@ -27,3 +27,5 @@ and an MSP says which of these are members of a given organization that particip
 tamper
 
 integrity
+
+impersonator

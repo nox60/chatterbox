@@ -29,3 +29,5 @@ tamper
 integrity
 
 impersonator
+
+disseminated

@@ -40,6 +40,8 @@ affiliation
 
 consortium
 
+instantiate
+
 premise
 
 organizational units (OUs) 超级账本专用名词

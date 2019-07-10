@@ -64,6 +64,7 @@ issuance
 
 mandatory
 
+ sign off 
 organizational units (OUs) 超级账本专用名词
 
 https://hyperledger-fabric-ca.readthedocs.io/en/release-1.4/#

@@ -64,7 +64,9 @@ issuance
 
 mandatory
 
- sign off 
+sign off 
+
+elaborate
  
 organizational units (OUs) 超级账本专用名词
 

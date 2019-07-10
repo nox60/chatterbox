@@ -52,6 +52,8 @@ payroll
 
 maturity 票据到期
 
+premium 优质的，高昂的，附加费
+
 creditworthy
 
 organizational units (OUs) 超级账本专用名词

@@ -54,6 +54,8 @@ maturity 票据到期
 
 premium 优质的，高昂的，附加费
 
+creditworthiness
+
 creditworthy
 
 obligations

@@ -70,3 +70,5 @@ MSPs appear in two places in a blockchain network: channel configuration (channe
 
 
 issue, buy and redeem 
+
+commercial paper.

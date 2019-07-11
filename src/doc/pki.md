@@ -83,6 +83,8 @@ vectors 向量
 
 scalars 标量
 
+analogous
+
 This puts a short term strain on its finances – it will require an extra 5M USD each month to pay these new employees.
 
 The exclusive relationship between an organization and its MSP makes it sensible to name the MSP after the organization, a convention you’ll find adopted in most policy configurations. 

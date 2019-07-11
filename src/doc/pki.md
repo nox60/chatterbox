@@ -91,7 +91,7 @@ collisions
 
 granularity
 
-concatenation
+concatenation ： The key for a PaperNet commercial paper is formed by a concatenation of the Issuer and paper properties
 
 This puts a short term strain on its finances – it will require an extra 5M USD each month to pay these new employees.
 

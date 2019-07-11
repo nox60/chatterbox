@@ -81,7 +81,7 @@ channel MSP
 
 vectors 向量
 
-
+scalars 标量
 
 This puts a short term strain on its finances – it will require an extra 5M USD each month to pay these new employees.
 

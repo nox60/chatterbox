@@ -85,6 +85,8 @@ vectors 向量
 
 scalars 标量
 
+intuitive 直观的：it’s a really good idea to use this kind of DNS name because well-chosen names will make your blockchain designs intuitive to other people. This idea applies equally well to smart contract names.
+
 analogous
 
 collisions

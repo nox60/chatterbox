@@ -67,6 +67,8 @@ mandatory
 sign off 
 
 elaborate
+
+allegiance
  
 organizational units (OUs) 超级账本专用名词
 

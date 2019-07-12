@@ -120,3 +120,6 @@ issue, buy and redeem
 
 commercial paper.
 
+class CommercialPaperContract extends Contract {...}
+
+

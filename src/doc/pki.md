@@ -120,6 +120,10 @@ To make these kinds of search tasks possible, it’s helpful to group all relate
 
 At the heart of a blockchain network is a smart contract. 
 
+Usually there will only be one smart contract per file – contracts tend to have different lifecycles, which makes it sensible to separate them. However, in some cases, multiple smart contracts might provide syntactic help for applications, e.g. EuroBond, DollarBond, YenBond, but essentially provide the same function. In such cases, smart contracts and transactions can be disambiguated.
+
+disambiguated
+
 issue, buy and redeem 
 
 commercial paper.

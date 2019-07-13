@@ -70,7 +70,9 @@ elaborate
 
 allegiance
 
-very descriptive
+very descriptive 生动
+
+EuroBond, DollarBond, YenBond
  
 organizational units (OUs) 超级账本专用名词
 

@@ -69,6 +69,8 @@ sign off
 elaborate
 
 allegiance
+
+descriptive
  
 organizational units (OUs) 超级账本专用名词
 

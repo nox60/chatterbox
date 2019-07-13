@@ -113,7 +113,6 @@ Notice how each state is self-describing; each property has a name and a value. 
 
 To make these kinds of search tasks possible, it’s helpful to group all related papers together in a logical list（这里说的是逻辑列表）. The PaperNet design incorporates the idea of a commercial paper list – a logical container which is updated whenever commercial papers are issued or otherwise changed.
 
-
 At the heart of a blockchain network is a smart contract. 
 
 issue, buy and redeem 

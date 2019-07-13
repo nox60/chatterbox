@@ -130,4 +130,6 @@ commercial paper.
 
 
 
+To solidify your understanding of the structure of a smart contract transaction, locate the buy and redeem transaction definitions, and see if you can see how they map to their corresponding commercial paper transactions.
+
 

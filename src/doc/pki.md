@@ -136,8 +136,9 @@ To solidify your understanding of the structure of a smart contract transaction,
 
 An application can interact with a blockchain network by submitting transactions to a ledger or querying ledger content. 
 
-This topic covers the mechanics of how an application does this; in our scenario, organizations access PaperNet using applications which invoke issue, sell and redeem transactions defined in a commercial paper smart contract. Even though MagnetoCorp’s application to issue a commercial paper is basic, it covers all the major points of understanding.
 
+
+You’re going to see how a typical application performs these six steps using the Fabric SDK. You’ll find the application code in the issue.js file. View it in your browser, or open it in your favourite editor if you’ve downloaded it. Spend a few moments looking at the overall structure of the application; even with comments and spacing, it’s only 100 lines of code!
 
 
 

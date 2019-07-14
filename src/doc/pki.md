@@ -134,4 +134,8 @@ commercial paper.
 
 To solidify your understanding of the structure of a smart contract transaction, locate the buy and redeem transaction definitions, and see if you can see how they map to their corresponding commercial paper transactions.
 
+An application can interact with a blockchain network by submitting transactions to a ledger or querying ledger content. This topic covers the mechanics of how an application does this; in our scenario, organizations access PaperNet using applications which invoke issue, sell and redeem transactions defined in a commercial paper smart contract. Even though MagnetoCorp’s application to issue a commercial paper is basic, it covers all the major points of understanding.
+
+
+
 

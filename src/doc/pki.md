@@ -70,6 +70,8 @@ elaborate
 
 allegiance
 
+efficient and effective solutions
+
 very descriptive 生动
 
 EuroBond, DollarBond, YenBond

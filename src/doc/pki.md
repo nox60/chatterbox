@@ -140,5 +140,7 @@ An application can interact with a blockchain network by submitting transactions
 
 You’re going to see how a typical application performs these six steps using the Fabric SDK. You’ll find the application code in the issue.js file. View it in your browser, or open it in your favourite editor if you’ve downloaded it. Spend a few moments looking at the overall structure of the application; even with comments and spacing, it’s only 100 lines of code!
 
+Think of a wallet holding the digital equivalents of your government ID, driving license or ATM card. The X.509 digital certificates within it will associate the holder with a organization, thereby entitling them to rights in a network channel. For example, Isabella might be an administrator in MagnetoCorp, and this could give her more privileges than a different user – Balaji from DigiBank. Moreover, a smart contract can retrieve this identity during smart contract processing using the transaction context.
+
 
 

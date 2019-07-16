@@ -163,6 +163,10 @@ All Hyperledger Fabric CA servers in a cluster share the same database for keepi
 A server may contain multiple CAs. Each CA is either a root CA or an intermediate CA. Each intermediate CA has a parent CA which is either a root CA or another intermediate CA.
 
 
+go install
+
+https://segmentfault.com/q/1010000004044176
+
 定义	
 协议	年份
 SSL 1.0	未知

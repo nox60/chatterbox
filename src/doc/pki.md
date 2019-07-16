@@ -151,3 +151,4 @@ That’s it! In this topic you’ve understood how to call a smart contract from
 In the Developing Applications topic, we can see how the Fabric SDKs provide high level programming abstractions which help application and smart contract developers to focus on their business problem, rather than the low level details of how to interact with a Fabric network.
 
 When a chaincode is installed and instantiated, all the smart contracts within it are made available to the corresponding channel.
+

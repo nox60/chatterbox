@@ -106,6 +106,8 @@ key features
 
 overall
 
+remainder 
+
 descriptive ： See how the list has a descriptive name: org.papernet.papers;
 
 concatenation ： The key for a PaperNet commercial paper is formed by a concatenation of the Issuer and paper properties

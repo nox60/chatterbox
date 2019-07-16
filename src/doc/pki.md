@@ -154,3 +154,7 @@ In the Developing Applications topic, we can see how the Fabric SDKs provide hig
 
 When a chaincode is installed and instantiated, all the smart contracts within it are made available to the corresponding channel.
 
+All Hyperledger Fabric CA servers in a cluster share the same database for keeping track of identities and certificates. If LDAP is configured, the identity information is kept in LDAP rather than the database.
+
+A server may contain multiple CAs. Each CA is either a root CA or an intermediate CA. Each intermediate CA has a parent CA which is either a root CA or another intermediate CA.
+

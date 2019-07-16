@@ -12,7 +12,6 @@ PKI是Public Key Infrastructure的首字母缩写，翻译过来就是公钥基�
 
 3. 证书库
 
-
 PKI核心流程： 
 
 https://blog.csdn.net/liuhuiyi/article/details/7776825

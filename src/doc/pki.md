@@ -95,6 +95,8 @@ elaborate
 
 allegiance
 
+respectively 分别地，相对地
+
 efficient and effective solutions
 
 very descriptive 生动

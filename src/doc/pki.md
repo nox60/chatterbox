@@ -191,6 +191,10 @@ A server may contain multiple CAs. Each CA is either a root CA or an intermediat
 The registrar can register an identity with attributes if all of the following conditions are satisfied:
 
 
+Now that you have successfully registered a peer identity, you may now enroll the peer given the enrollment ID and secret (i.e. the password from the previous section). This is similar to enrolling the bootstrap identity except that we also demonstrate how to use the “-M” option to populate the Hyperledger Fabric MSP (Membership Service Provider) directory structure.
+
+
+
 go install
 
 https://segmentfault.com/q/1010000004044176

@@ -188,6 +188,8 @@ All Hyperledger Fabric CA servers in a cluster share the same database for keepi
 
 A server may contain multiple CAs. Each CA is either a root CA or an intermediate CA. Each intermediate CA has a parent CA which is either a root CA or another intermediate CA.
 
+The registrar can register an identity with attributes if all of the following conditions are satisfied:
+
 
 go install
 

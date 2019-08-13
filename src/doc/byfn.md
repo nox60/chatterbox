@@ -51,6 +51,7 @@ byfn.sh -h 打印以上信息
 2. 生成msp
 3. 生成orderer的各个容器
 
+
 ## 手动generate ca
 
 crypto-config.yaml 文件描述了拓扑结构

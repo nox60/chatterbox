@@ -3,6 +3,7 @@
 该文件在first-network/fabric-samples目录下面
 
 
+
 # 操作说明
 
 byfn.sh <mode> [-c <channel name>] [-t <timeout>] [-d <delay>] [-f <docker-compose-file>] [-s <dbtype>] [-l <language>] [-o <consensus-type>] [-i <imagetag>] [-a] [-n] [-v] 
